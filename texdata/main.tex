@@ -1,0 +1,42 @@
+%!TEX program = pdflatex
+%!TEX spellcheck = en
+%!TEX aux_directory = aux
+%!TEX output_directory = aux
+
+
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+ 
+\usepackage{amsthm}
+ 
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+ 
+\begin{document}
+\section{Introduction}
+Theorems can easily be defined
+
+\begin{definition}
+	\label{def:label1}
+	Let $f$ be a function whose derivative exists in every point, then $f$ is a continuous function.
+\end{definition}
+ 
+\begin{definition}
+	\label{def:label2}
+	Let $f$ be a function whose derivative exists in every point, then $f$ is a continuous function.
+\end{definition}
+
+\begin{theorem}
+	\label{th:1}
+	Let $f$ be a function whose derivative exists in every point, then $f$ is a continuous function.
+\end{theorem}
+\begin{proof}
+	According to Definition~\ref{def:label1}.
+\end{proof}
+
+
+\end{document}
+
