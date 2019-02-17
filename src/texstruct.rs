@@ -34,6 +34,16 @@ impl Document {
 
     	output
     }
+
+    pub fn keys(&self) -> std::collections::hash_map::Keys<'_, String, Box<TexStructure>> {
+
+    	self.list_tex_struct.keys()
+    }
+
+    pub fn get(&self, key: String) -> &Box<TexStructure> {
+
+    	&self.list_tex_struct[&key]
+    }
 }
 
 /* Tex structure */

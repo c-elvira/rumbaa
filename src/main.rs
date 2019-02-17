@@ -1,6 +1,7 @@
-pub mod texparser;
+mod texparser;
 mod texstruct;
 mod textmpfile;
+mod visualize;
 
 use std::env;
 
@@ -20,4 +21,7 @@ fn main() {
     	.expect("Unable to process texfile");
 
     println!("{}", doc.print());
+
+    visualize::visualize(&doc)
+    	.expect("Something went wrong when exporting tex document");
 }

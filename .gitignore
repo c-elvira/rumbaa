@@ -1,4 +1,7 @@
 /target
+/temp
+/out/original.json
+/out/texstruct.json
 **/*.rs.bk
 
 texdata/main.pdf
