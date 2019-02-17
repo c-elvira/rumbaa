@@ -1,15 +1,23 @@
 extern crate regex;
 
-use std::fs;
+use std::io::{BufReader};
+use std::io::prelude::*;
 
 use regex::Regex;
-use crate::texstruct::Document;
-use crate::texstruct::Definition;
-use crate::texstruct::Theorem;
+use crate::texstruct::{Document,Definition,Theorem};
+use crate::textmpfile::build_tmp_file;
 
-pub fn parse_tex(filename: String) -> Document {
-	let contents = fs::read_to_string(String::clone(&filename))
-        .expect("Something went wrong reading the file");
+pub fn parse_tex(filename: String) -> std::io::Result<(Document)> {
+
+	// get clean tex
+	let tmp_file = build_tmp_file(&filename)?;
+	//tmp_file.seek(SeekFrom::Start(0)).unwrap();
+
+	// Process it
+    let mut contents = String::new();
+    let mut buf_reader = BufReader::new(tmp_file);
+    buf_reader.read_to_string(&mut contents).unwrap();
+    // tmp_file.read_to_string(&mut contents)
 
         // Creating document
 	let mut tex_doc = Document::new(filename);
@@ -38,7 +46,7 @@ pub fn parse_tex(filename: String) -> Document {
     	tex_doc.push(strlabel, th);
 	}
 
-	tex_doc
+	Ok(tex_doc)
 }
 
 fn find_label(text: String) -> String {
