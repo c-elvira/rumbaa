@@ -47,8 +47,9 @@ fn _wrap_all_sources(main_file: &mut File, folder: &String) -> std::io::Result<(
 	   	let text_file = match read_to_string(&input_file_name) {
 			Ok(file) => file,
 			_ => {
+				// File does not exist - replace the command by an empty string
 				println!("Unable to find file {}", input_file_name);
-				continue;
+				String::from("Unable to find file ".to_owned() + &input_file_name)
 			},
 		};
 	   	contents = contents.replace(&caps[0], &text_file);
