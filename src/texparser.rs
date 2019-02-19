@@ -14,11 +14,11 @@ use crate::textmpfile::build_tmp_file;
  * @param e [description]
  * @return [description]
  */
-pub fn parse_tex(filename: &String) -> std::io::Result<(Document)> {
+pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Document)> {
 
 
 	// get clean tex
-	let tmp_file = build_tmp_file(&filename)?;
+	let tmp_file = build_tmp_file(&filename, &folder)?;
 	//tmp_file.seek(SeekFrom::Start(0)).unwrap();
 
 	// Process it

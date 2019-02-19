@@ -6,10 +6,20 @@ use std::fs::{File,OpenOptions,read_to_string,remove_file};
 use std::io::{Write, Read, copy,Seek,Error,SeekFrom};
 
 
-pub fn visualize(doc: &Document) -> Result<(), Error> {
+pub fn visualize(doc: &Document, out_dir: &String) -> Result<(), Error> {
 
-	let outdir = String::from("out/");
-	export_to_json(doc, &outdir)?;
+	export_to_json(doc, &out_dir)?;
+
+	// 2. create html page
+	let html_text = include_str!("ressources/index.html");
+	let mut html_file = OpenOptions::new()
+		.read(true)
+		.write(true)
+		.create(true)
+		.open(out_dir.to_owned() + "index.html")
+		?;
+
+	writeln!(html_file,"{}", html_text).unwrap();
 
 	Ok(())
 }
@@ -19,7 +29,11 @@ fn export_to_json(doc: &Document, outdir: &String) -> Result<(), Error> {
 	// Relies on https://bl.ocks.org/heybignick/3faf257bbbbc7743bb72310d03b86ee8
 
 		// Remove if file exists
-	remove_file(outdir.to_owned() + "texstruct.json").unwrap();
+	match remove_file(outdir.to_owned() + "texstruct.json") {
+		Ok(_) => (),  // file existed, it has been deleted
+		Err(_) => (), // file did not exist, nothing happened
+
+	};
 
 		// Then creates it
 	let mut jsonfile = OpenOptions::new()

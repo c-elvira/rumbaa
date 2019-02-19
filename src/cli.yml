@@ -1,0 +1,31 @@
+name: rtex
+version: "0.1"
+author: Clément E. <clementh.elvira@gmail.com>
+about: Display structure of a latex document
+args:
+    - INPUT:
+        help: Sets the input file to use
+        required: true
+        index: 1
+    - folder:
+        short: f
+        long: folder
+        value_name: FOLDER
+        help: Sets folder for sources
+        takes_value: true
+    - auxiliary folder:
+        short: a
+        long: aux
+        value_name: AUX FOLDER
+        help: Sets folder for auxiliary files
+        takes_value: true
+    - output:
+        short: o
+        long: out
+        value_name: OUT FOLDER
+        help: Sets folder for outputs
+        takes_value: true
+    - verbose:
+        short: v
+        multiple: true
+        help: Sets the level of verbosity

@@ -23,7 +23,7 @@ impl Document {
 
 	pub fn print(&self) -> String {
 
-		let mut output = String::from("Printing tex structure\n");
+		let mut output = String::from("Printing tex structures\n");
 
 
 		for (_keylabel, tex_struct) in &self.list_tex_struct {
@@ -94,8 +94,27 @@ impl Definition{
 	}
 }
 
-
 impl Theorem{
+	pub fn new (label:String) -> Self {
+		Self {
+			name: String::from(""),
+			label: label,
+			proof: None,
+		}
+	}
+}
+
+impl Proposition{
+	pub fn new (label:String) -> Self {
+		Self {
+			name: String::from(""),
+			label: label,
+			proof: None,
+		}
+	}
+}
+
+impl Lemma{
 	pub fn new (label:String) -> Self {
 		Self {
 			name: String::from(""),
@@ -157,6 +176,45 @@ impl TexStructure for Theorem {
 	}
 }
 
+impl TexStructure for Proposition {
+
+	fn print(&self) -> String {
+		let output = " - Theorem".to_owned()
+			+ ": " + &self.label 
+			+ &self.name; // + &self.text;
+
+		output
+	}
+
+	fn add_proof(&mut self, proof: Proof) {
+		self.proof = Some(proof);
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
+
+		&self.proof
+	}
+}
+
+impl TexStructure for Lemma {
+
+	fn print(&self) -> String {
+		let output = " - Theorem".to_owned()
+			+ ": " + &self.label 
+			+ &self.name; // + &self.text;
+
+		output
+	}
+
+	fn add_proof(&mut self, proof: Proof) {
+		self.proof = Some(proof);
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
+
+		&self.proof
+	}
+}
 
 pub struct Proof {
 	structlabel: String,
