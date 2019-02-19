@@ -23,32 +23,30 @@ fn export_to_json(doc: &Document, outdir: &String) -> Result<(), Error> {
 
 		// Then creates it
 	let mut jsonfile = OpenOptions::new()
-        .read(true)
-        .append(true)
-        .create(true)
-        .open(outdir.to_owned() + "texstruct.json")
-        ?;
-
-    println!("printing keys");
+		.read(true)
+		.append(true)
+		.create(true)
+		.open(outdir.to_owned() + "texstruct.json")
+		?;
 	
 	writeln!(
 		jsonfile,
-        "{{"
-        ).unwrap();
+		"{{"
+		).unwrap();
 
 	export_json_nodes(doc, &mut jsonfile)?;
 
 	writeln!(
-        jsonfile,
-        "\t,"
-        ).unwrap();
+		jsonfile,
+		"\t,"
+		).unwrap();
 
 	export_json_links(doc, &mut jsonfile)?;
 
 	writeln!(
-        jsonfile,
-        "}}"
-        ).unwrap();
+		jsonfile,
+		"}}"
+		).unwrap();
 
 	Ok(())
 }
@@ -56,60 +54,75 @@ fn export_to_json(doc: &Document, outdir: &String) -> Result<(), Error> {
 fn export_json_nodes(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 
 	writeln!(
-        jsonfile,
-        "\t\"nodes\": ["
-        ).unwrap();
+		jsonfile,
+		"\t\"nodes\": ["
+		).unwrap();
 
 	let mut i = 0;
-    for key in doc.keys() {
-    	// {"id": "Myriel", "group": 1},
-    	if i == 0 {
-		   	writeln!(
-    		    jsonfile,
-        		"\t\t{{\"id\": \"{}\", \"group\": 1}}", key
-        	).unwrap();
-    	}
-    	else {
-		   	writeln!(
-    		    jsonfile,
-        		"\t\t, {{\"id\": \"{}\", \"group\": 1}}", key
-        	).unwrap();
-    	}
+	for key in doc.keys() {
+		// {"id": "Myriel", "group": 1},
+		if i == 0 {
+			writeln!(
+				jsonfile,
+				"\t\t{{\"id\": \"{}\", \"group\": 1}}", key
+			).unwrap();
+		}
+		else {
+			writeln!(
+				jsonfile,
+				"\t\t, {{\"id\": \"{}\", \"group\": 1}}", key
+			).unwrap();
+		}
 
-    	i += 1;
-    }
+		i += 1;
+	}
 
 	writeln!(
-        jsonfile,
-        "\t]"
-        ).unwrap();
+		jsonfile,
+		"\t]"
+		).unwrap();
 
 	Ok(())
 }
 
-#[allow(unused_variables)]
+
 fn export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 
 	writeln!(
-        jsonfile,
-        "\t\"links\": ["
-        ).unwrap();
+		jsonfile,
+		"\t\"links\": ["
+		).unwrap();
 
-	/*
-    for key in doc.keys() {
-    	// {"id": "Myriel", "group": 1},
-	   	writeln!(
-    	    jsonfile,
-        	"\t\t{{\"id\": \"{}\", \"group\":1}},", key
-        ).unwrap();
-    	println!("{}: {}",key, doc.get(key.to_string()).print());
-    }
-    */
+	let mut i = 0;
+	for key in doc.keys() {
+		// {"source": "Napoleon", "target": "Myriel", "value": 1},
+		let texstruct = doc.get(key.to_string());
+		let proof = match texstruct.get_proof() {
+			Some(expr) => expr,
+			None => continue,
+		 };
 
+		for j in 0..proof.get_nblinks() {
+			if i == 0 {
+				writeln!(
+					jsonfile,
+					"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", key, proof.get_link(j),
+				).unwrap();
+			}
+			else {
+				writeln!(
+					jsonfile,
+					"\t\t, {{\"source\": \"{}\", \"target\":\"{}\", \"value\": 2}}", key, proof.get_link(j),
+				).unwrap();			}
+
+			i += 1;
+		}
+	}
+	
 	writeln!(
-        jsonfile,
-        "\t]"
-        ).unwrap();
+		jsonfile,
+		"\t]"
+		).unwrap();
 
 	Ok(())
 }

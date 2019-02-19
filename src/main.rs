@@ -17,7 +17,7 @@ fn main() {
 		};
 
     println!("Processing file {}:\n\n", filename);
-    let doc = texparser::parse_tex(filename)
+    let doc = texparser::parse_tex(&filename)
     	.expect("Unable to process texfile");
 
     println!("{}", doc.print());
