@@ -1,81 +1,35 @@
-use std::collections::HashMap;
-
-pub struct Document {
-	pub filename: String,
-	pub list_tex_struct: HashMap<String, Box<TexStructure>>,
-}
-
-impl Document {
-
-	pub fn new (strfilename: String) -> Self {
-		Self {
-			filename: strfilename,
-			list_tex_struct: HashMap::new(),
-		}
-	}
-	
-	pub fn push<S: TexStructure + 'static>(&mut self, key: String, tex: S) -> &mut Self {
-		self.list_tex_struct.insert(key, Box::new(tex));
-		
-		// return self
-		self
-	}
-
-	pub fn print(&self) -> String {
-
-		let mut output = String::from("Printing tex structures\n");
-
-
-		for (_keylabel, tex_struct) in &self.list_tex_struct {
-			output = output 
-				+ &tex_struct.print()
-				+ "\n";
-		}
-
-		output
-	}
-
-	pub fn keys(&self) -> std::collections::hash_map::Keys<'_, String, Box<TexStructure>> {
-
-		self.list_tex_struct.keys()
-	}
-
-	pub fn get(&self, key: String) -> &Box<TexStructure> {
-
-		&self.list_tex_struct[&key]
-	}
-
-	pub fn add_proof(&mut self, structlabel: &String, proof: Proof) {
-
-		let texstruct = self.list_tex_struct.get_mut(structlabel).unwrap();
-		texstruct.add_proof(proof);
-	}
-}
-
 /* Tex structure */
 
 pub struct Definition {
 	label: String,
 	name: String,
 	proof: Option<Proof>,
+	ilabel: i32,
+	page: i32,
 }
 
 pub struct Theorem {
 	label: String,
 	name: String,
 	proof: Option<Proof>,
+	ilabel: i32,
+	page: i32,
 }
 
 pub struct Proposition {
 	label: String,
 	name: String,
 	proof: Option<Proof>,
+	ilabel: i32,
+	page: i32,
 }
 
 pub struct Lemma {
 	label: String,
 	name: String,
 	proof: Option<Proof>,
+	ilabel: i32,
+	page: i32,
 }
 
 // Todo: TexStructFactory
@@ -88,8 +42,10 @@ impl Definition{
 	pub fn new (label:String) -> Self {
 		Self {
 			label: label,
-			name: String::from(""),
+			name: String::from("None"),
 			proof: None,
+			ilabel: 0,
+			page: 0,
 		}
 	}
 }
@@ -97,9 +53,11 @@ impl Definition{
 impl Theorem{
 	pub fn new (label:String) -> Self {
 		Self {
-			name: String::from(""),
+			name: String::from("None"),
 			label: label,
 			proof: None,
+			ilabel: 0,
+			page: 0,
 		}
 	}
 }
@@ -107,9 +65,11 @@ impl Theorem{
 impl Proposition{
 	pub fn new (label:String) -> Self {
 		Self {
-			name: String::from(""),
+			name: String::from("None"),
 			label: label,
 			proof: None,
+			ilabel: 0,
+			page: 0,
 		}
 	}
 }
@@ -117,9 +77,11 @@ impl Proposition{
 impl Lemma{
 	pub fn new (label:String) -> Self {
 		Self {
-			name: String::from(""),
+			name: String::from("None"),
 			label: label,
 			proof: None,
+			ilabel: 0,
+			page: 0,
 		}
 	}
 }
@@ -131,9 +93,14 @@ pub trait TexStructure {
 
 	fn print(&self) -> String;
 
-	fn add_proof(&mut self, proof: Proof);
+	fn set_proof(&mut self, proof: Proof);
+	fn set_ilabel(&mut self, ilabel: i32);
+	fn set_page(&mut self, page: i32);
+	fn set_name(&mut self, name: String);
+
 
 	fn get_proof(&self) -> &Option<Proof>;
+	fn get_name(&self) -> &String;
 }
 
 impl TexStructure for Definition {
@@ -146,13 +113,32 @@ impl TexStructure for Definition {
 		output
 	}
 
-	fn add_proof(&mut self, proof: Proof) {
+	fn set_proof(&mut self, proof: Proof) {
 		self.proof = Some(proof);
 	}
 
-	fn get_proof(&self) -> &Option<Proof> {
+	fn set_ilabel(&mut self, ilabel: i32) {
+		self.ilabel = ilabel;
+		self.name   = String::from("Def. ".to_owned() + &self.ilabel.to_string());
+	}
 
+	fn set_page(&mut self, page: i32) {
+		self.page = page;
+	}
+
+	fn set_name(&mut self, name: String) {
+		self.name = name;
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
 		&self.proof
+	}
+
+	fn get_name(&self) -> &String {
+		match self.name.as_ref() {
+			"None" => return &self.label,
+			_ => return &self.name,
+		}
 	}
 }
 
@@ -166,81 +152,138 @@ impl TexStructure for Theorem {
 		output
 	}
 
-	fn add_proof(&mut self, proof: Proof) {
+	fn set_proof(&mut self, proof: Proof) {
 		self.proof = Some(proof);
 	}
 
-	fn get_proof(&self) -> &Option<Proof> {
+	fn set_ilabel(&mut self, ilabel: i32) {
+		self.ilabel = ilabel;
+		self.name   = String::from("Th. ".to_owned() + &self.ilabel.to_string());
+	}
 
+	fn set_page(&mut self, page: i32) {
+		self.page = page;
+	}
+
+	fn set_name(&mut self, name: String) {
+		self.name = name;
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
 		&self.proof
+	}
+
+	fn get_name(&self) -> &String {
+		match self.name.as_ref() {
+			"None" => return &self.label,
+			_ => return &self.name,
+		}
 	}
 }
 
 impl TexStructure for Proposition {
 
 	fn print(&self) -> String {
-		let output = " - Theorem".to_owned()
+		let output = " - Proposition".to_owned()
 			+ ": " + &self.label 
 			+ &self.name; // + &self.text;
 
 		output
 	}
 
-	fn add_proof(&mut self, proof: Proof) {
+	fn set_proof(&mut self, proof: Proof) {
 		self.proof = Some(proof);
 	}
 
-	fn get_proof(&self) -> &Option<Proof> {
+	fn set_ilabel(&mut self, ilabel: i32) {
+		self.ilabel = ilabel;
+		self.name   = String::from("Prop. ".to_owned() + &self.ilabel.to_string());
+	}
 
+	fn set_page(&mut self, page: i32) {
+		self.page = page;
+	}
+
+	fn set_name(&mut self, name: String) {
+		self.name = name;
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
 		&self.proof
+	}
+
+	fn get_name(&self) -> &String {
+		match self.name.as_ref() {
+			"None" => return &self.label,
+			_ => return &self.name,
+		}
 	}
 }
 
 impl TexStructure for Lemma {
 
 	fn print(&self) -> String {
-		let output = " - Theorem".to_owned()
+		let output = " - Lemma".to_owned()
 			+ ": " + &self.label 
 			+ &self.name; // + &self.text;
 
 		output
 	}
 
-	fn add_proof(&mut self, proof: Proof) {
+	fn set_proof(&mut self, proof: Proof) {
 		self.proof = Some(proof);
 	}
 
-	fn get_proof(&self) -> &Option<Proof> {
+	fn set_ilabel(&mut self, ilabel: i32) {
+		self.ilabel = ilabel;
 
+		if self.name == String::from("None") {
+			self.name = String::from("Lem. ".to_owned() + &self.ilabel.to_string());
+		} 
+	}
+
+	fn set_page(&mut self, page: i32) {
+		self.page = page;
+	}
+
+	fn set_name(&mut self, name: String) {
+		self.name = name;
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
 		&self.proof
+	}
+
+	fn get_name(&self) -> &String {
+		match self.name.as_ref() {
+			"None" => return &self.label,
+			_ => return &self.name,
+		}
 	}
 }
 
 pub struct Proof {
-	structlabel: String,
+	_structlabel: String,
 	links: Vec<String>,
 }
 
 impl Proof {
 	pub fn new (structlabel: String) -> Self {
 		Self {
-			structlabel: structlabel,
+			_structlabel: structlabel,
 			links: Vec::new(),
 		}
 	}
 
 	pub fn add_link(&mut self, link: String) {
-
 		self.links.push(link);
 	}
 
 	pub fn get_nblinks(&self) -> usize {
-
 		self.links.len()
 	}
 
 	pub fn get_link(&self, i: usize) -> &String {
-
 		&self.links[i]
 	}
 }
