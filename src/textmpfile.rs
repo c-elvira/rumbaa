@@ -2,7 +2,8 @@ extern crate tempfile;
 extern crate regex;
 
 use std::fs::{File,OpenOptions,read_to_string};
-use std::io::{Write, Read, copy,Seek,Error,SeekFrom};
+use std::io::{Write,BufReader,Read, copy,Seek,Error,SeekFrom};
+use std::io::prelude::*;
 use regex::Regex;
 
 pub fn build_tmp_file(texmain: &String, folder: &String) -> Result<File, Error> {
@@ -13,23 +14,38 @@ pub fn build_tmp_file(texmain: &String, folder: &String) -> Result<File, Error> 
 	};
 
 	{
-		let mut tmp_file: File = File::create("tmp.tex")?;
+		let mut tmp_file: File = File::create("rtex_tmp.tex")?;
 		//let mut tmp_file = tempfile::tempfile_in(".")?;
 		copy(&mut texfile, &mut tmp_file)?;
 	}
 	
-	let mut tmp_file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open("tmp.tex")
-        ?;
-    
-	_wrap_all_sources(&mut tmp_file, folder)?;
+	let tmp_file_name_1 = String::from("rtex_tmp.tex");
+	wrap_all_sources(&tmp_file_name_1, folder)?;
+
+	let tmp_file_name_2 = String::from("rtex_tmp2.tex");
+	match remove_comments(&tmp_file_name_2, &tmp_file_name_1) {
+		Ok(()) => (),
+		Err(_)  => {
+			println!("Something wrong happened while removing comments from tex file");
+			println!("Continue anayway");
+		},
+	};
+
+	let tmp_file = match File::open(&tmp_file_name_2) {
+		Ok(file) => file,
+		_ => panic!("Unable to find {}", tmp_file_name_2),
+	};
 
 	Ok(tmp_file)
 }
 
-fn _wrap_all_sources(main_file: &mut File, folder: &String) -> std::io::Result<()> {
+fn wrap_all_sources(main_file_name: &String, folder: &String) -> std::io::Result<()> {
+
+	let mut main_file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(main_file_name)
+        ?;
 
 	let mut contents = String::new();
 	main_file.read_to_string(&mut contents)?;
@@ -62,6 +78,50 @@ fn _wrap_all_sources(main_file: &mut File, folder: &String) -> std::io::Result<(
         "{}", contents
         ).unwrap();
 	main_file.seek(SeekFrom::Start(0)).unwrap();
+
+	Ok(())
+}
+
+fn remove_comments(new_tmpfile_name: &String, tmp_file1_name: &String) -> std::io::Result<()> {
+
+	// File to process
+	let tmp_file1 = File::open(tmp_file1_name)?;
+	let buf_reader = BufReader::new(tmp_file1);
+
+	// let mut new_tmp_file = OpenOptions::new()
+ //        .read(true)
+ //        .append(true)
+ //        .open(new_tmpfile_name)
+ //        ?;
+    let mut new_tmp_file: File = File::create(&new_tmpfile_name)?;
+
+	for (_num, line) in buf_reader.lines().enumerate() {
+    	let l = line.unwrap();
+
+    	if l.contains("%") == false {
+			writeln!(
+    		    new_tmp_file,
+    	    	"{}", l
+	        ).unwrap();
+    	}
+    	else if l.contains("%!TEX") == true {
+			writeln!(
+    		    new_tmp_file,
+    	    	"{}", l
+	        ).unwrap();
+    	}
+    	else {
+    		// Contains a true comment. Try to remove it
+       		let split = l.split("%");
+    		let vec: Vec<&str> = split.collect();
+    
+   			writeln!(
+    		    new_tmp_file,
+    	    	"{}", vec[0]
+	        ).unwrap();
+    	}
+
+	}
 
 	Ok(())
 }
