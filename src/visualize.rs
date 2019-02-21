@@ -1,4 +1,4 @@
-use crate::texstruct::{Document};
+use crate::document::{Document};
 
 #[allow(unused_imports)]
 use std::fs::{File,OpenOptions,read_to_string,remove_file};
@@ -11,7 +11,7 @@ pub fn visualize(doc: &Document, out_dir: &String) -> Result<(), Error> {
 	export_to_json(doc, &out_dir)?;
 
 	// 2. create html page
-	let html_text = include_str!("ressources/index.html");
+	let html_text = include_str!("ressources/index2.html");
 	let mut html_file = OpenOptions::new()
 		.read(true)
 		.write(true)
@@ -74,17 +74,20 @@ fn export_json_nodes(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 
 	let mut i = 0;
 	for key in doc.keys() {
+
+		let name = doc.get_name_from_key(key);
+
 		// {"id": "Myriel", "group": 1},
 		if i == 0 {
 			writeln!(
 				jsonfile,
-				"\t\t{{\"id\": \"{}\", \"group\": 1}}", key
+				"\t\t{{\"id\": \"{}\", \"group\": 1}}", name
 			).unwrap();
 		}
 		else {
 			writeln!(
 				jsonfile,
-				"\t\t, {{\"id\": \"{}\", \"group\": 1}}", key
+				"\t\t, {{\"id\": \"{}\", \"group\": 1}}", name
 			).unwrap();
 		}
 
@@ -108,28 +111,39 @@ fn export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 		).unwrap();
 
 	let mut i = 0;
-	for key in doc.keys() {
+	'loop_source: for key in doc.keys() {
 		// {"source": "Napoleon", "target": "Myriel", "value": 1},
 		let texstruct = doc.get(key.to_string());
 		let proof = match texstruct.get_proof() {
 			Some(expr) => expr,
-			None => continue,
+			None => continue 'loop_source,
 		 };
 
-		for j in 0..proof.get_nblinks() {
-			if i == 0 {
-				writeln!(
-					jsonfile,
-					"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", key, proof.get_link(j),
-				).unwrap();
-			}
-			else {
-				writeln!(
-					jsonfile,
-					"\t\t, {{\"source\": \"{}\", \"target\":\"{}\", \"value\": 2}}", key, proof.get_link(j),
-				).unwrap();			}
+		let name1 = doc.get_name_from_key(key);
+		'loop_target: for j in 0..proof.get_nblinks() {
 
-			i += 1;
+			if doc.key_exist(proof.get_link(j)) {
+
+				let name2 = doc.get_name_from_key(proof.get_link(j));
+				if name1 == name2 {
+					continue 'loop_target;
+				}
+				//println!("\t{} - {}", name1, name2);
+				if i == 0 {
+					writeln!(
+						jsonfile,
+						"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", name1, name2,
+					).unwrap();
+				}
+				else {
+					writeln!(
+						jsonfile,
+						"\t\t, {{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", name1, name2,
+					).unwrap();
+				}
+
+				i += 1;
+			}
 		}
 	}
 	

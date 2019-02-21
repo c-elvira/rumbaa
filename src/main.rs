@@ -1,6 +1,8 @@
 mod texparser;
+mod document;
 mod texstruct;
 mod textmpfile;
+mod auxparser;
 mod visualize;
 
 #[macro_use]
@@ -23,7 +25,7 @@ fn main() {
 		None 	=> String::from(""),
 	};
 
-	let _auxfolder = match matches.value_of("auxiliary folder") {
+	let aux_folder = match matches.value_of("auxiliary folder") {
 		Some(f) => String::from(f),
 		None 	=> String::from(""),
 	};
@@ -33,11 +35,30 @@ fn main() {
 		None 	=> String::from(""),
 	};
 
-    println!("Processing file {}:\n\n", filename);
-    let doc = texparser::parse_tex(&filename, &folder).unwrap();
+	let verbose = matches.occurrences_of("verbose");
 
-    println!("{}", doc.print());
+	if verbose >= 1	{
+	    println!("Processing file {}:", filename);
+	}
+
+    let mut doc = match texparser::parse_tex(&filename, &folder) {
+    	Ok(d) => d,
+    	Err(e) => panic!("An errror had occured while parsing tex file\n{}", e),
+    };
     
+    match auxparser::parse_aux(&filename, &aux_folder, &mut doc, &verbose) {
+    	Ok(()) => (),
+    	Err(_e) => println!("an error occurs while parsing aux file\n {}", _e),
+    };
+
+    if verbose >= 2 {
+	    println!("{}", doc.print());
+	}
+
+	if verbose >= 1	{
+	    println!("Exporting tex structure");
+	}
+
     visualize::visualize(&doc, &output_folder)
     	.expect("Something went wrong when exporting tex document");
 }

@@ -27,5 +27,7 @@ args:
         takes_value: true
     - verbose:
         short: v
+        long: verbose
         multiple: true
+        takes_value: true
         help: Sets the level of verbosity
