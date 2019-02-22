@@ -64,13 +64,13 @@ In your terminal, call
     rumbaa my_document.tex
 ```
 The outputs are
-    * A html file called *index.html*. open it to see the mathematical structure of your document,
-    * a json files containing the detected structures and links.
+ * A html file called *index.html*. open it to see the mathematical structure of your document,
+ * a json files containing the detected structures and links.
 
 Options are:
-    * -f, --folder: if the main latex file is not in the current directory,
-    * -o, --output: to specify the output directory, 
-    * -a, --aux: to specify the directory containing auxiliary files (may improve visualization). 
+ * -f, --folder: if the main latex file is not in the current directory,
+ * -o, --output: to specify the output directory, 
+ * -a, --aux: to specify the directory containing auxiliary files (may improve visualization). 
 
 
 ## Milestones
