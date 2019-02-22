@@ -75,7 +75,7 @@ Options are:
 
 ## Milestones
 
- - [ ] Fist prototype: parse a multi-files latex document and display 
+ - [x] Fist prototype: parse a multi-files latex document and display 
  - [ ] Use equation label to improve connections between mathematical structures
  - [ ] Use custom structures for latex (others than basic ones)
  - [ ] Improve output
