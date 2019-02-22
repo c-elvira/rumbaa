@@ -20,7 +20,7 @@ fn main() {
 
 	let filename = String::from(matches.value_of("INPUT").unwrap());
 
-	let folder = match matches.value_of("folder") {
+	let data_folder = match matches.value_of("folder") {
 		Some(f) => String::from(f),
 		None 	=> String::from(""),
 	};
@@ -41,14 +41,14 @@ fn main() {
 	    println!("Processing file {}:", filename);
 	}
 
-    let mut doc = match texparser::parse_tex(&filename, &folder) {
+    let mut doc = match texparser::parse_tex(&filename, &data_folder) {
     	Ok(d) => d,
     	Err(e) => panic!("An errror had occured while parsing tex file\n{}", e),
     };
-    
+
     match auxparser::parse_aux(&filename, &aux_folder, &mut doc, &verbose) {
     	Ok(()) => (),
-    	Err(_e) => println!("an error occurs while parsing aux file\n {}", _e),
+    	Err(e) => println!("an error occurs while parsing aux file\n{}", e),
     };
 
     if verbose >= 2 {

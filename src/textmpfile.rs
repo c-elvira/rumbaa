@@ -1,7 +1,7 @@
 extern crate tempfile;
 extern crate regex;
 
-use std::fs::{File,OpenOptions,read_to_string};
+use std::fs::{File,OpenOptions,read_to_string,remove_file};
 use std::io::{Write,BufReader,Read, copy,Seek,Error,SeekFrom};
 use std::io::prelude::*;
 use regex::Regex;
@@ -14,29 +14,26 @@ pub fn build_tmp_file(texmain: &String, folder: &String) -> Result<File, Error> 
 	};
 
 	{
-		let mut tmp_file: File = File::create("rtex_tmp.tex")?;
-		//let mut tmp_file = tempfile::tempfile_in(".")?;
+		let mut tmp_file: File = File::create(format!("{}{}", folder, "rtex_tmp.tex"))?;
 		copy(&mut texfile, &mut tmp_file)?;
 	}
 	
-	let tmp_file_name_1 = String::from("rtex_tmp.tex");
+	let tmp_file_name_1 = format!("{}{}", folder, "rtex_tmp.tex");
 	wrap_all_sources(&tmp_file_name_1, folder)?;
 
-	let tmp_file_name_2 = String::from("rtex_tmp2.tex");
+	let tmp_file_name_2 = format!("{}{}", folder, "rtex_tmp2.tex");
 	match remove_comments(&tmp_file_name_2, &tmp_file_name_1) {
-		Ok(()) => (),
+		Ok(()) => {
+			remove_file(tmp_file_name_1).unwrap();
+			return Ok(File::open(&tmp_file_name_2)?)
+		},
 		Err(_)  => {
 			println!("Something wrong happened while removing comments from tex file");
 			println!("Continue anayway");
+
+			return Ok(File::open(&tmp_file_name_1)?)
 		},
 	};
-
-	let tmp_file = match File::open(&tmp_file_name_2) {
-		Ok(file) => file,
-		_ => panic!("Unable to find {}", tmp_file_name_2),
-	};
-
-	Ok(tmp_file)
 }
 
 fn wrap_all_sources(main_file_name: &String, folder: &String) -> std::io::Result<()> {
@@ -88,11 +85,6 @@ fn remove_comments(new_tmpfile_name: &String, tmp_file1_name: &String) -> std::i
 	let tmp_file1 = File::open(tmp_file1_name)?;
 	let buf_reader = BufReader::new(tmp_file1);
 
-	// let mut new_tmp_file = OpenOptions::new()
- //        .read(true)
- //        .append(true)
- //        .open(new_tmpfile_name)
- //        ?;
     let mut new_tmp_file: File = File::create(&new_tmpfile_name)?;
 
 	for (_num, line) in buf_reader.lines().enumerate() {
@@ -120,7 +112,6 @@ fn remove_comments(new_tmpfile_name: &String, tmp_file1_name: &String) -> std::i
     	    	"{}", vec[0]
 	        ).unwrap();
     	}
-
 	}
 
 	Ok(())
