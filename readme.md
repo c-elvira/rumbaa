@@ -3,7 +3,7 @@
 rumbaa is a mathematical analyzer for latex documents written in Rust.
 The output of of rumbaa is graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...)
 
-[example](docs/struct_example.png)
+![example](docs/struct_example.png)
 
 ## Installation - *Work in progress*
 
