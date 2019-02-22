@@ -9,30 +9,36 @@ mod visualize;
 extern crate clap;
 
 use clap::{App};
+use std::fs::{create_dir_all};
 
 //use std::env;
 
 fn main() {
 
-	// Processing inputs
+	// 1. Processing input arguments
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
 	let filename = String::from(matches.value_of("INPUT").unwrap());
 
 	let data_folder = match matches.value_of("folder") {
-		Some(f) => String::from(f),
+		Some(f) => format_dir_name(String::from(f)),
 		None 	=> String::from(""),
 	};
 
 	let aux_folder = match matches.value_of("auxiliary folder") {
-		Some(f) => String::from(f),
+		Some(f) => format_dir_name(String::from(f)),
 		None 	=> String::from(""),
 	};
 
 	let output_folder = match matches.value_of("output") {
-		Some(f) => String::from(f),
+		Some(f) => format_dir_name(String::from(f)),
 		None 	=> String::from(""),
+	};
+	match create_dir_all(&output_folder) {
+		Ok(_) => (),
+		Err(_) => panic!("A problem occurs with argument -o:\n{}\n
+			\tIs it a valid directory filename", output_folder)
 	};
 
 	let verbose = matches.occurrences_of("verbose");
@@ -61,4 +67,13 @@ fn main() {
 
     visualize::visualize(&doc, &output_folder)
     	.expect("Something went wrong when exporting tex document");
+}
+
+fn format_dir_name(dir: String) -> String {
+	
+	if dir.ends_with("/") == false {
+		return format!("{}/", dir)
+	}
+
+	dir
 }
