@@ -1,6 +1,10 @@
 /target
+/temp
+/out
 **/*.rs.bk
 
+texdata/main.pdf
+texdata/aux/*.pdf
 
 # Created by https://www.gitignore.io/api/rust,latex
 # Edit at https://www.gitignore.io/?templates=rust,latex

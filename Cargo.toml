@@ -1,0 +1,10 @@
+[package]
+name = "rumbaa"
+version = "0.2.0"
+authors = ["celvira <clementh.elvira@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+regex = "1"
+tempfile = "3"
+clap = {version = "~2.27.0", features = ["yaml"]}
