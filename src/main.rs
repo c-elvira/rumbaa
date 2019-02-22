@@ -43,6 +43,7 @@ fn main() {
 
 	let verbose = matches.occurrences_of("verbose");
 
+	// 2. 
 	if verbose >= 1	{
 	    println!("Processing file {}:", filename);
 	}
