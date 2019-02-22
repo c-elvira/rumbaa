@@ -44,7 +44,7 @@ However, the first one should be associated to the environment.
 **Proofs:**
 In order to create links between mathematical structures, rumbaa parses proofs.
 Since a proof may not be right after its associated results, I recommend adding the following *latexmk*-like option in the proof environment:
-```
+``` latex
 \begin{proof}
     %!TEX proof = {th:my_label}
     ...
