@@ -32,13 +32,21 @@ pub struct Lemma {
 	page: i32,
 }
 
+pub struct Corollary {
+	label: String,
+	name: String,
+	proof: Option<Proof>,
+	ilabel: i32,
+	page: i32,
+}
+
 // Todo: TexStructFactory
 
 
 
 /* Constructors */
 
-impl Definition{
+impl Definition {
 	pub fn new (label:String) -> Self {
 		Self {
 			label: label,
@@ -50,7 +58,7 @@ impl Definition{
 	}
 }
 
-impl Theorem{
+impl Theorem {
 	pub fn new (label:String) -> Self {
 		Self {
 			name: String::from("None"),
@@ -62,7 +70,7 @@ impl Theorem{
 	}
 }
 
-impl Proposition{
+impl Proposition {
 	pub fn new (label:String) -> Self {
 		Self {
 			name: String::from("None"),
@@ -74,7 +82,19 @@ impl Proposition{
 	}
 }
 
-impl Lemma{
+impl Lemma {
+	pub fn new (label:String) -> Self {
+		Self {
+			name: String::from("None"),
+			label: label,
+			proof: None,
+			ilabel: 0,
+			page: 0,
+		}
+	}
+}
+
+impl Corollary {
 	pub fn new (label:String) -> Self {
 		Self {
 			name: String::from("None"),
@@ -239,6 +259,49 @@ impl TexStructure for Lemma {
 
 		if self.name == String::from("None") {
 			self.name = String::from("Lem. ".to_owned() + &self.ilabel.to_string());
+		} 
+	}
+
+	fn set_page(&mut self, page: i32) {
+		self.page = page;
+	}
+
+	fn set_name(&mut self, name: String) {
+		self.name = name;
+	}
+
+	fn get_proof(&self) -> &Option<Proof> {
+		&self.proof
+	}
+
+	fn get_name(&self) -> &String {
+		match self.name.as_ref() {
+			"None" => return &self.label,
+			_ => return &self.name,
+		}
+	}
+}
+
+
+impl TexStructure for Corollary {
+
+	fn print(&self) -> String {
+		let output = " - Corollary".to_owned()
+			+ ": " + &self.label 
+			+ &self.name; // + &self.text;
+
+		output
+	}
+
+	fn set_proof(&mut self, proof: Proof) {
+		self.proof = Some(proof);
+	}
+
+	fn set_ilabel(&mut self, ilabel: i32) {
+		self.ilabel = ilabel;
+
+		if self.name == String::from("None") {
+			self.name = String::from("Cor. ".to_owned() + &self.ilabel.to_string());
 		} 
 	}
 

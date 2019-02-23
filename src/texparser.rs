@@ -3,7 +3,7 @@ extern crate regex;
 use std::io::{BufReader};
 use std::io::prelude::*;
 
-use crate::texstruct::{Definition,Theorem,Lemma,Proposition,Proof};
+use crate::texstruct::{Definition,Theorem,Lemma,Proposition,Proof,Corollary};
 use crate::document::{Document};
 
 use regex::Regex;
@@ -42,6 +42,7 @@ pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Documen
 	process_theorem(&contents, &mut tex_doc);
 	process_lemma(&contents, &mut tex_doc);
 	process_proposition(&contents, &mut tex_doc);
+	process_corollary(&contents, &mut tex_doc);
 
 	// 2. Finaly process proofs
 	process_proofs(&contents, &mut tex_doc);
@@ -80,10 +81,9 @@ fn process_lemma(text: &String, doc: &mut Document) {
 	let regex_lemma = Regex::new(r"(\\begin\{lemma\})(.*?)(\\end\{lemma\})").unwrap();
 	for cap in regex_lemma.captures_iter(&text) {	
 		let strlabel = find_label(&cap[2].to_string());
-		//let cleantext = remove_label(cap[2].to_string(), &strlabel);
 
-		let th = Lemma::new(String::clone(&strlabel));
-		doc.push(strlabel, th);
+		let lemma = Lemma::new(String::clone(&strlabel));
+		doc.push(strlabel, lemma);
 	}
 }
 
@@ -93,10 +93,21 @@ fn process_proposition(text: &String, doc: &mut Document) {
 	let regex_prop = Regex::new(r"(\\begin\{proposition\})(.*?)(\\end\{proposition\})").unwrap();
 	for cap in regex_prop.captures_iter(&text) {	
 		let strlabel = find_label(&cap[2].to_string());
-		//let cleantext = remove_label(cap[2].to_string(), &strlabel);
 
-		let th = Proposition::new(String::clone(&strlabel));
-		doc.push(strlabel, th);
+		let prop = Proposition::new(String::clone(&strlabel));
+		doc.push(strlabel, prop);
+	}
+}
+
+
+fn process_corollary(text: &String, doc: &mut Document) {
+	
+	let regex_prop = Regex::new(r"(\\begin\{corollary\})(.*?)(\\end\{corollary\})").unwrap();
+	for cap in regex_prop.captures_iter(&text) {	
+		let strlabel = find_label(&cap[2].to_string());
+
+		let corr = Corollary::new(String::clone(&strlabel));
+		doc.push(strlabel, corr);
 	}
 }
 
