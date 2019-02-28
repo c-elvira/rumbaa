@@ -1,5 +1,21 @@
 /* Tex structure */
 
+pub trait TexStructure {
+	// add code here
+
+	fn print(&self) -> String;
+
+	fn set_proof(&mut self, proof: Proof);
+	fn set_ilabel(&mut self, ilabel: i32);
+	fn set_page(&mut self, page: i32);
+	fn set_name(&mut self, name: String);
+
+
+	fn get_proof(&self) -> &Option<Proof>;
+	fn get_name(&self) -> &String;
+}
+
+
 pub struct Definition {
 	label: String,
 	name: String,
@@ -107,21 +123,6 @@ impl Corollary {
 }
 
 /* trait TexStructure */
-
-pub trait TexStructure {
-	// add code here
-
-	fn print(&self) -> String;
-
-	fn set_proof(&mut self, proof: Proof);
-	fn set_ilabel(&mut self, ilabel: i32);
-	fn set_page(&mut self, page: i32);
-	fn set_name(&mut self, name: String);
-
-
-	fn get_proof(&self) -> &Option<Proof>;
-	fn get_name(&self) -> &String;
-}
 
 impl TexStructure for Definition {
 	
