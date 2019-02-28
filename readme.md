@@ -1,7 +1,8 @@
 # rumbaa - RUst Mathematics Bloc Analysis for lAtex document
+[![Build Status](https://travis-ci.com/c-elvira/rumbaa.svg?token=rHHx69ioGqz4NFraNjyT&branch=master)](https://travis-ci.com/c-elvira/rumbaa)
 
 rumbaa is a mathematical analyzer for latex documents written in Rust.
-The output of of rumbaa is graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...)
+The output of rumbaa is graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...)
 
 ![example](docs/struct_example.png)
 
