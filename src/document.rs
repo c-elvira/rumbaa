@@ -4,7 +4,7 @@ use crate::texstruct::{TexStructure,Proof};
 
 pub struct Document {
 	pub filename: String,
-	pub list_tex_struct: HashMap<String, Box<TexStructure>>,
+	pub list_tex_struct: HashMap<String, TexStructure>,
 }
 
 impl Document {
@@ -16,8 +16,8 @@ impl Document {
 		}
 	}
 	
-	pub fn push<S: TexStructure + 'static>(&mut self, key: String, tex: S) -> &mut Self {
-		self.list_tex_struct.insert(key, Box::new(tex));
+	pub fn push(&mut self, key: String, tex: TexStructure) -> &mut Self {
+		self.list_tex_struct.insert(key, tex);
 		
 		// return self
 		self
@@ -35,7 +35,7 @@ impl Document {
 		output
 	}
 
-	pub fn keys(&self) -> std::collections::hash_map::Keys<'_, String, Box<TexStructure>> {
+	pub fn keys(&self) -> std::collections::hash_map::Keys<'_, String, TexStructure> {
 		self.list_tex_struct.keys()
 	}
 
@@ -43,7 +43,7 @@ impl Document {
 		self.list_tex_struct.contains_key(key)
 	}
 
-	pub fn get(&self, key: String) -> &Box<TexStructure> {
+	pub fn get(&self, key: String) -> &TexStructure {
 		&self.list_tex_struct[&key]
 	}
 

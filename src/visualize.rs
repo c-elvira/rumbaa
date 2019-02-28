@@ -73,10 +73,10 @@ fn export_json_nodes(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 		).unwrap();
 
 	let mut i = 0;
+
 	for key in doc.keys() {
 
 		let name = doc.get_name_from_key(key);
-
 		// {"id": "Myriel", "group": 1},
 		if i == 0 {
 			writeln!(

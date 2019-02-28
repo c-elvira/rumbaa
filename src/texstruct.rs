@@ -1,161 +1,96 @@
 /* Tex structure */
 
-pub trait TexStructure {
-	// add code here
 
-	fn print(&self) -> String;
-
-	fn set_proof(&mut self, proof: Proof);
-	fn set_ilabel(&mut self, ilabel: i32);
-	fn set_page(&mut self, page: i32);
-	fn set_name(&mut self, name: String);
-
-
-	fn get_proof(&self) -> &Option<Proof>;
-	fn get_name(&self) -> &String;
+pub enum EnumTexType {
+	Definition,
+	Theorem,
+	Proposition,
+	Lemma,
+	Corollary,
+	Other
 }
 
+pub fn clone_tex_type(tex_type: &EnumTexType) -> EnumTexType {
+		match tex_type {
+			EnumTexType::Definition  => EnumTexType::Definition,
+			EnumTexType::Theorem 	 => EnumTexType::Theorem,
+			EnumTexType::Proposition => EnumTexType::Proposition,
+			EnumTexType::Lemma 		 => EnumTexType::Lemma,
+			EnumTexType::Corollary   => EnumTexType::Corollary,
+			_ 						 => EnumTexType::Definition,
+		}
+	}
 
-pub struct Definition {
+
+pub struct TexStructure {
 	label: String,
 	name: String,
+	math_type: EnumTexType,
 	proof: Option<Proof>,
 	ilabel: i32,
 	page: i32,
 }
 
-pub struct Theorem {
-	label: String,
-	name: String,
-	proof: Option<Proof>,
-	ilabel: i32,
-	page: i32,
-}
-
-pub struct Proposition {
-	label: String,
-	name: String,
-	proof: Option<Proof>,
-	ilabel: i32,
-	page: i32,
-}
-
-pub struct Lemma {
-	label: String,
-	name: String,
-	proof: Option<Proof>,
-	ilabel: i32,
-	page: i32,
-}
-
-pub struct Corollary {
-	label: String,
-	name: String,
-	proof: Option<Proof>,
-	ilabel: i32,
-	page: i32,
-}
-
-// Todo: TexStructFactory
-
-
-
-/* Constructors */
-
-impl Definition {
-	pub fn new (label:String) -> Self {
+impl TexStructure {
+	pub fn new (label:String, math_type: EnumTexType) -> Self {
 		Self {
 			label: label,
 			name: String::from("None"),
+			math_type: math_type,
 			proof: None,
 			ilabel: 0,
 			page: 0,
 		}
 	}
-}
-
-impl Theorem {
-	pub fn new (label:String) -> Self {
-		Self {
-			name: String::from("None"),
-			label: label,
-			proof: None,
-			ilabel: 0,
-			page: 0,
-		}
-	}
-}
-
-impl Proposition {
-	pub fn new (label:String) -> Self {
-		Self {
-			name: String::from("None"),
-			label: label,
-			proof: None,
-			ilabel: 0,
-			page: 0,
-		}
-	}
-}
-
-impl Lemma {
-	pub fn new (label:String) -> Self {
-		Self {
-			name: String::from("None"),
-			label: label,
-			proof: None,
-			ilabel: 0,
-			page: 0,
-		}
-	}
-}
-
-impl Corollary {
-	pub fn new (label:String) -> Self {
-		Self {
-			name: String::from("None"),
-			label: label,
-			proof: None,
-			ilabel: 0,
-			page: 0,
-		}
-	}
-}
-
-/* trait TexStructure */
-
-impl TexStructure for Definition {
 	
-	fn print(&self) -> String {
-		let output = " - Definition".to_owned() 
+	pub fn print(&self) -> String {
+
+		let rtype = match self.math_type {
+			EnumTexType::Definition => " - Definition",
+			EnumTexType::Theorem => " - Theorem",
+			EnumTexType::Proposition => " - Proposition",
+			EnumTexType::Lemma => " - Lemma",
+			EnumTexType::Corollary => " - Corollary",
+			EnumTexType::Other => " - Other",
+		};
+
+		let output = rtype.to_owned() 
 			+ ": " + &self.label
 			+ &self.name;
 
 		output
 	}
 
-	fn set_proof(&mut self, proof: Proof) {
+	pub fn set_proof(&mut self, proof: Proof) {
 		self.proof = Some(proof);
 	}
 
-	fn set_ilabel(&mut self, ilabel: i32) {
+	pub fn set_ilabel(&mut self, ilabel: i32) {
 		self.ilabel = ilabel;
-		self.name   = String::from("Def. ".to_owned() + &self.ilabel.to_string());
+		let type_str = match self.math_type {
+			EnumTexType::Definition => "Def. ",
+			EnumTexType::Theorem => " - Th. ",
+			EnumTexType::Proposition => "Prop. ",
+			EnumTexType::Lemma => "Lem. ",
+			EnumTexType::Corollary => "Cor. ",
+			EnumTexType::Other => "Other ",	
+		};
+		self.name   = String::from(type_str.to_owned() + &self.ilabel.to_string());
 	}
 
-	fn set_page(&mut self, page: i32) {
+	pub fn set_page(&mut self, page: i32) {
 		self.page = page;
 	}
 
-	fn set_name(&mut self, name: String) {
+	pub fn set_name(&mut self, name: String) {
 		self.name = name;
 	}
 
-	fn get_proof(&self) -> &Option<Proof> {
+	pub fn get_proof(&self) -> &Option<Proof> {
 		&self.proof
 	}
 
-	fn get_name(&self) -> &String {
+	pub fn get_name(&self) -> &String {
 		match self.name.as_ref() {
 			"None" => return &self.label,
 			_ => return &self.name,
@@ -163,168 +98,6 @@ impl TexStructure for Definition {
 	}
 }
 
-impl TexStructure for Theorem {
-
-	fn print(&self) -> String {
-		let output = " - Theorem".to_owned()
-			+ ": " + &self.label 
-			+ &self.name; // + &self.text;
-
-		output
-	}
-
-	fn set_proof(&mut self, proof: Proof) {
-		self.proof = Some(proof);
-	}
-
-	fn set_ilabel(&mut self, ilabel: i32) {
-		self.ilabel = ilabel;
-		self.name   = String::from("Th. ".to_owned() + &self.ilabel.to_string());
-	}
-
-	fn set_page(&mut self, page: i32) {
-		self.page = page;
-	}
-
-	fn set_name(&mut self, name: String) {
-		self.name = name;
-	}
-
-	fn get_proof(&self) -> &Option<Proof> {
-		&self.proof
-	}
-
-	fn get_name(&self) -> &String {
-		match self.name.as_ref() {
-			"None" => return &self.label,
-			_ => return &self.name,
-		}
-	}
-}
-
-impl TexStructure for Proposition {
-
-	fn print(&self) -> String {
-		let output = " - Proposition".to_owned()
-			+ ": " + &self.label 
-			+ &self.name; // + &self.text;
-
-		output
-	}
-
-	fn set_proof(&mut self, proof: Proof) {
-		self.proof = Some(proof);
-	}
-
-	fn set_ilabel(&mut self, ilabel: i32) {
-		self.ilabel = ilabel;
-		self.name   = String::from("Prop. ".to_owned() + &self.ilabel.to_string());
-	}
-
-	fn set_page(&mut self, page: i32) {
-		self.page = page;
-	}
-
-	fn set_name(&mut self, name: String) {
-		self.name = name;
-	}
-
-	fn get_proof(&self) -> &Option<Proof> {
-		&self.proof
-	}
-
-	fn get_name(&self) -> &String {
-		match self.name.as_ref() {
-			"None" => return &self.label,
-			_ => return &self.name,
-		}
-	}
-}
-
-impl TexStructure for Lemma {
-
-	fn print(&self) -> String {
-		let output = " - Lemma".to_owned()
-			+ ": " + &self.label 
-			+ &self.name; // + &self.text;
-
-		output
-	}
-
-	fn set_proof(&mut self, proof: Proof) {
-		self.proof = Some(proof);
-	}
-
-	fn set_ilabel(&mut self, ilabel: i32) {
-		self.ilabel = ilabel;
-
-		if self.name == String::from("None") {
-			self.name = String::from("Lem. ".to_owned() + &self.ilabel.to_string());
-		} 
-	}
-
-	fn set_page(&mut self, page: i32) {
-		self.page = page;
-	}
-
-	fn set_name(&mut self, name: String) {
-		self.name = name;
-	}
-
-	fn get_proof(&self) -> &Option<Proof> {
-		&self.proof
-	}
-
-	fn get_name(&self) -> &String {
-		match self.name.as_ref() {
-			"None" => return &self.label,
-			_ => return &self.name,
-		}
-	}
-}
-
-
-impl TexStructure for Corollary {
-
-	fn print(&self) -> String {
-		let output = " - Corollary".to_owned()
-			+ ": " + &self.label 
-			+ &self.name; // + &self.text;
-
-		output
-	}
-
-	fn set_proof(&mut self, proof: Proof) {
-		self.proof = Some(proof);
-	}
-
-	fn set_ilabel(&mut self, ilabel: i32) {
-		self.ilabel = ilabel;
-
-		if self.name == String::from("None") {
-			self.name = String::from("Cor. ".to_owned() + &self.ilabel.to_string());
-		} 
-	}
-
-	fn set_page(&mut self, page: i32) {
-		self.page = page;
-	}
-
-	fn set_name(&mut self, name: String) {
-		self.name = name;
-	}
-
-	fn get_proof(&self) -> &Option<Proof> {
-		&self.proof
-	}
-
-	fn get_name(&self) -> &String {
-		match self.name.as_ref() {
-			"None" => return &self.label,
-			_ => return &self.name,
-		}
-	}
-}
 
 pub struct Proof {
 	_structlabel: String,

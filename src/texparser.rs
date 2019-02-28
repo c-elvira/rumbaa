@@ -1,13 +1,23 @@
 extern crate regex;
 
+use std::collections::HashMap;
+
 use std::io::{BufReader};
 use std::io::prelude::*;
 
-use crate::texstruct::{Definition,Theorem,Lemma,Proposition,Proof,Corollary};
+use crate::texstruct::{TexStructure,EnumTexType,clone_tex_type,Proof};
 use crate::document::{Document};
 
 use regex::Regex;
 use crate::textmpfile::build_tmp_file;
+
+macro_rules! hashmap {
+    ($( $key: expr => $val: expr ),*) => {{
+         let mut map = ::std::collections::HashMap::new();
+         $( map.insert($key, $val); )*
+         map
+    }}
+}
 
 /**
  * @brief [brief description]
@@ -38,11 +48,20 @@ pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Documen
 	// 1. Looking for:
 	// 	- definitions
 	//	- theorems
-	process_definition(&contents, &mut tex_doc);
-	process_theorem(&contents, &mut tex_doc);
-	process_lemma(&contents, &mut tex_doc);
-	process_proposition(&contents, &mut tex_doc);
-	process_corollary(&contents, &mut tex_doc);
+
+	// HashMap<&str, EnumTexType> =
+    let tex_structure_collection = hashmap![
+    	"definition".to_string()  => EnumTexType::Definition,
+    	"theorem".to_string() 	  => EnumTexType::Theorem,
+    	"proposition".to_string() => EnumTexType::Proposition,
+    	"lemma".to_string()		  => EnumTexType::Lemma,
+    	"corollary".to_string()   => EnumTexType::Corollary,
+       	"custom".to_string()   => EnumTexType::Other
+		];
+
+	for (keyword, tex_type) in tex_structure_collection {
+		find_structs(&contents, &keyword, &tex_type, &mut tex_doc);
+	}
 
 	// 2. Finaly process proofs
 	process_proofs(&contents, &mut tex_doc);
@@ -50,64 +69,19 @@ pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Documen
 	Ok(tex_doc)
 }
 
-fn process_definition(text: &String, doc: &mut Document) {
+
+fn find_structs(text: &String, keyword: &String, tex_type: &EnumTexType, doc: &mut Document) {
 	
-	let regex_def = Regex::new(r"(\\begin\{definition\})(.*?)(\\end\{definition\})").unwrap();
-	for cap in regex_def.captures_iter(&text) {	
+	let str_regex = format!(r"(\\begin\{{{}\}})(.*?)(\\end\{{{}\}})", keyword, keyword);
+	// "(\\begin\{definition\})(.*?)(\\end\{definition\})"
+	let regex_def = Regex::new(&str_regex).unwrap();
+	for cap in regex_def.captures_iter(&text) {
+		//println!("{:?}", cap);
 		let strlabel = find_label(&cap[2].to_string());
 		//let cleantext = remove_label(cap[2].to_string(), &strlabel);
 
-		let def = Definition::new(String::clone(&strlabel));
-		doc.push(String::clone(&strlabel), def);
-	}
-}
-
-
-fn process_theorem(text: &String, doc: &mut Document) {
-	
-	let regex_theorem = Regex::new(r"(\\begin\{theorem\})(.*?)(\\end\{theorem\})").unwrap();
-	for cap in regex_theorem.captures_iter(&text) {	
-		let strlabel = find_label(&cap[2].to_string());
-		//let cleantext = remove_label(cap[2].to_string(), &strlabel);
-
-		let th = Theorem::new(String::clone(&strlabel));
-		doc.push(strlabel, th);
-	}
-}
-
-
-fn process_lemma(text: &String, doc: &mut Document) {
-	
-	let regex_lemma = Regex::new(r"(\\begin\{lemma\})(.*?)(\\end\{lemma\})").unwrap();
-	for cap in regex_lemma.captures_iter(&text) {	
-		let strlabel = find_label(&cap[2].to_string());
-
-		let lemma = Lemma::new(String::clone(&strlabel));
-		doc.push(strlabel, lemma);
-	}
-}
-
-
-fn process_proposition(text: &String, doc: &mut Document) {
-	
-	let regex_prop = Regex::new(r"(\\begin\{proposition\})(.*?)(\\end\{proposition\})").unwrap();
-	for cap in regex_prop.captures_iter(&text) {	
-		let strlabel = find_label(&cap[2].to_string());
-
-		let prop = Proposition::new(String::clone(&strlabel));
-		doc.push(strlabel, prop);
-	}
-}
-
-
-fn process_corollary(text: &String, doc: &mut Document) {
-	
-	let regex_prop = Regex::new(r"(\\begin\{corollary\})(.*?)(\\end\{corollary\})").unwrap();
-	for cap in regex_prop.captures_iter(&text) {	
-		let strlabel = find_label(&cap[2].to_string());
-
-		let corr = Corollary::new(String::clone(&strlabel));
-		doc.push(strlabel, corr);
+		let def = TexStructure::new(String::clone(&strlabel), clone_tex_type(tex_type));
+		doc.push(strlabel, def);
 	}
 }
 
