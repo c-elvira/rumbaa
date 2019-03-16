@@ -82,7 +82,7 @@ fn build_tex_struct_collection(text: &String) -> HashMap<String, EnumTexType> {
 		let new_keyword = cap[1].to_string();
 
 		if !tex_structure_collection.contains_key(&new_keyword) {
-			tex_structure_collection.insert(new_keyword, EnumTexType::Other);
+			tex_structure_collection.insert(new_keyword, EnumTexType::Custom);
 		}
 	}
 
