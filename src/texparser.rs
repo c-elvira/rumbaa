@@ -63,17 +63,28 @@ pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Documen
 }
 
 
-fn build_tex_struct_collection(_text: &String) -> HashMap<String, EnumTexType> {
+fn build_tex_struct_collection(text: &String) -> HashMap<String, EnumTexType> {
 	
-	// HashMap<&str, EnumTexType> =
-    let tex_structure_collection = hashmap![
+	// Initial Hashmap
+    let mut tex_structure_collection = hashmap![
     	"definition".to_string()  => EnumTexType::Definition,
     	"theorem".to_string() 	  => EnumTexType::Theorem,
     	"proposition".to_string() => EnumTexType::Proposition,
     	"lemma".to_string()		  => EnumTexType::Lemma,
-    	"corollary".to_string()   => EnumTexType::Corollary,
-       	"custom".to_string()   => EnumTexType::Other
+    	"corollary".to_string()   => EnumTexType::Corollary
 		];
+
+	// Looking for new structure
+	// \newtheorem{name}{Printed output}
+	let str_regex = r"\\newtheorem\{(.*?)\}\{(.*?)\}";
+	let regex_def = Regex::new(&str_regex).unwrap();
+	for cap in regex_def.captures_iter(&text) {
+		let new_keyword = cap[1].to_string();
+
+		if !tex_structure_collection.contains_key(&new_keyword) {
+			tex_structure_collection.insert(new_keyword, EnumTexType::Other);
+		}
+	}
 
 	return tex_structure_collection
 }
