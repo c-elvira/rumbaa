@@ -50,14 +50,7 @@ pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Documen
 	//	- theorems
 
 	// HashMap<&str, EnumTexType> =
-    let tex_structure_collection = hashmap![
-    	"definition".to_string()  => EnumTexType::Definition,
-    	"theorem".to_string() 	  => EnumTexType::Theorem,
-    	"proposition".to_string() => EnumTexType::Proposition,
-    	"lemma".to_string()		  => EnumTexType::Lemma,
-    	"corollary".to_string()   => EnumTexType::Corollary,
-       	"custom".to_string()   => EnumTexType::Other
-		];
+    let tex_structure_collection = build_tex_struct_collection(&contents);
 
 	for (keyword, tex_type) in tex_structure_collection {
 		find_structs(&contents, &keyword, &tex_type, &mut tex_doc);
@@ -67,6 +60,22 @@ pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Documen
 	process_proofs(&contents, &mut tex_doc);
 
 	Ok(tex_doc)
+}
+
+
+fn build_tex_struct_collection(_text: &String) -> HashMap<String, EnumTexType> {
+	
+	// HashMap<&str, EnumTexType> =
+    let tex_structure_collection = hashmap![
+    	"definition".to_string()  => EnumTexType::Definition,
+    	"theorem".to_string() 	  => EnumTexType::Theorem,
+    	"proposition".to_string() => EnumTexType::Proposition,
+    	"lemma".to_string()		  => EnumTexType::Lemma,
+    	"corollary".to_string()   => EnumTexType::Corollary,
+       	"custom".to_string()   => EnumTexType::Other
+		];
+
+	return tex_structure_collection
 }
 
 
@@ -118,6 +127,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 		doc.set_proof(&associated_th[1].to_string(), proof);
 	}
 }
+
 
 fn find_label(text: &String) -> String {
 	
