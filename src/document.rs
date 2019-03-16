@@ -53,6 +53,12 @@ impl Document {
 		texstruct.get_name()
 	}
 
+	pub fn get_group_from_key(&self, key: &String) -> i32 {
+		let texstruct = self.list_tex_struct.get(key).unwrap();
+
+		texstruct.get_group()
+	}
+
 	pub fn set_proof(&mut self, structlabel: &String, proof: Proof) {
 		let texstruct = self.list_tex_struct.get_mut(structlabel).unwrap();
 

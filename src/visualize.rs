@@ -77,17 +77,18 @@ fn export_json_nodes(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 	for key in doc.keys() {
 
 		let name = doc.get_name_from_key(key);
+		let group = doc.get_group_from_key(key);
 		// {"id": "Myriel", "group": 1},
 		if i == 0 {
 			writeln!(
 				jsonfile,
-				"\t\t{{\"id\": \"{}\", \"group\": 1}}", name
+				"\t\t{{\"id\": \"{}\", \"group\": {}}}", name, group
 			).unwrap();
 		}
 		else {
 			writeln!(
 				jsonfile,
-				"\t\t, {{\"id\": \"{}\", \"group\": 1}}", name
+				"\t\t, {{\"id\": \"{}\", \"group\": {}}}", name, group
 			).unwrap();
 		}
 

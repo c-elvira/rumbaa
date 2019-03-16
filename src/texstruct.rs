@@ -1,13 +1,13 @@
 /* Tex structure */
 
-
+#[derive(Copy, Clone)]
 pub enum EnumTexType {
+	Custom = 0,
 	Definition,
 	Theorem,
 	Proposition,
 	Lemma,
-	Corollary,
-	Other
+	Corollary
 }
 
 pub fn clone_tex_type(tex_type: &EnumTexType) -> EnumTexType {
@@ -17,7 +17,7 @@ pub fn clone_tex_type(tex_type: &EnumTexType) -> EnumTexType {
 			EnumTexType::Proposition => EnumTexType::Proposition,
 			EnumTexType::Lemma 		 => EnumTexType::Lemma,
 			EnumTexType::Corollary   => EnumTexType::Corollary,
-			_ 						 => EnumTexType::Definition,
+			_ 						 => EnumTexType::Custom,
 		}
 	}
 
@@ -51,7 +51,7 @@ impl TexStructure {
 			EnumTexType::Proposition => " - Proposition",
 			EnumTexType::Lemma => " - Lemma",
 			EnumTexType::Corollary => " - Corollary",
-			EnumTexType::Other => " - Other",
+			EnumTexType::Custom => " - Other",
 		};
 
 		let output = rtype.to_owned() 
@@ -73,7 +73,7 @@ impl TexStructure {
 			EnumTexType::Proposition => "Prop. ",
 			EnumTexType::Lemma => "Lem. ",
 			EnumTexType::Corollary => "Cor. ",
-			EnumTexType::Other => "Other ",	
+			EnumTexType::Custom => "Other ",	
 		};
 		self.name   = String::from(type_str.to_owned() + &self.ilabel.to_string());
 	}
@@ -95,6 +95,12 @@ impl TexStructure {
 			"None" => return &self.label,
 			_ => return &self.name,
 		}
+	}
+
+	pub fn get_group(&self) -> i32 {
+		let out :i32 = self.math_type.clone() as i32;
+
+		out
 	}
 }
 
