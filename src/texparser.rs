@@ -129,7 +129,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 			Some(cap_label) => cap_label,
 			None => continue,
 		};
-		if doc.key_exist(&associated_th[1].to_string()) == false {
+		if doc.contains_key(&associated_th[1].to_string()) == false {
 			continue 'loop_proof;
 		}
 
@@ -150,7 +150,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 
 
 fn find_label(text: &String) -> Option<String> {
-	
+
 	let re_label = Regex::new(r"(\\label\{)(.*?)(\})").unwrap();
 	match re_label.captures(&text) {
     	Some(caps) => {
@@ -185,14 +185,15 @@ fn seeks_equations(text: &String, math_struct: &mut TexStructure) {
 		// 2. Iterature over \begin{eq} ... \end{eq}
 		'eq_loop: for cap in regex_eq.captures_iter(&text) {
 			// While label are found, continue
-			'label_loop: loop {
-				let mut _eq_text = cap[2].to_string().clone();
+			let mut _eq_text = cap[2].to_string().clone();
 
+			'label_loop: loop {
 				// 2. find all label 
 				match find_label(&_eq_text) {
 					Some(strlabel) => {
 						// 2.1. remove found label
-						_eq_text = _eq_text.replace(&strlabel[..], "");
+						let full_label = "\\label{".to_owned() + &strlabel + "}";
+						_eq_text = _eq_text.replace(&full_label[..], "");
 
 						// 2.2. add label to structure
 						math_struct.add_equation(strlabel);

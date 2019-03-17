@@ -39,30 +39,92 @@ impl Document {
 		self.list_tex_struct.keys()
 	}
 
-	pub fn key_exist(&self, key: &String) -> bool {
+	pub fn contains_key(&self, key: &String) -> bool {
+		self.list_tex_struct.contains_key(key)
+	}
+
+	/**
+	 * @brief [brief description]
+	 * @details [long description]
+	 * 
+	 * @param f [description]
+	 * @param y [description]
+	 * 
+	 * @return the label of the struct that contain the label
+	 * else None
+	 */
+	pub fn structs_contain_label(&self, key: &String) -> Option<String> {
 		for (keylabel, tex_struct) in &self.list_tex_struct {
 			if tex_struct.contains_equation(&key) || *keylabel == *key {
-				return true
+				return Some(keylabel.clone())
 			}
-			//self.list_tex_struct.contains_key(key)
 		}
-		return false
+
+		return None
 	}
 
-	pub fn get(&self, key: String) -> &TexStructure {
-		&self.list_tex_struct[&key]
+	pub fn get(&self, key: &String) -> &TexStructure {
+		&self.list_tex_struct[key]
 	}
 
-	pub fn get_name_from_key(&self, key: &String) -> &String {
-		let texstruct = self.list_tex_struct.get(key).unwrap();
-
-		texstruct.get_name()
+	pub fn get_name_from_key(&self, key: &String) -> Option<&String> {
+		match self.list_tex_struct.get(key) {
+			Some(texstruct) => {
+				return Some(texstruct.get_name())
+			}
+			None => {
+				return None
+			}
+		}
 	}
 
-	pub fn get_group_from_key(&self, key: &String) -> i32 {
-		let texstruct = self.list_tex_struct.get(key).unwrap();
+	pub fn get_group_from_key(&self, key: &String) -> Option<i32> {
+		match self.list_tex_struct.get(key) {
+			Some(texstruct) => {
+				return Some(texstruct.get_group())
+			}
+			None => {
+				return None
+			}
+		}
+	}
 
-		texstruct.get_group()
+	/**
+	 * @brief [brief description]
+	 * @details return None if key does not exist
+	 * 
+	 * @param f [description]
+	 * @return [description]
+	 */
+	pub fn get_vec_dependences(&self, key: &String) -> Option<Vec<String>> {
+		if !self.contains_key(key) {
+			return None
+		}
+
+		// 1. create output
+		let mut out: Vec<String>;
+		out = Vec::new();
+
+		// 2. get structure and proof
+		let mystruct = self.get(key);
+		let proof = match mystruct.get_proof() {
+			Some(expr) => expr,
+			None => return Some(out),
+		 };
+
+		// 3. proofs exists; iterate over links
+		'loop_target: for j in 0..proof.get_nblinks() {
+			match self.structs_contain_label(proof.get_link(j)) {
+				Some(label) => {
+					// Unwrap is safe here
+					//let name_dep = self.get_name_from_key(&label).unwrap();
+					out.push(label.clone());
+				}
+				None => continue 'loop_target,
+			}
+		}
+
+		Some(out)
 	}
 
 	pub fn set_proof(&mut self, structlabel: &String, proof: Proof) {
