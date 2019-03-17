@@ -27,6 +27,7 @@ pub struct TexStructure {
 	name: String,
 	math_type: EnumTexType,
 	proof: Option<Proof>,
+	equation_labels: Vec<String>,
 	ilabel: i32,
 	page: i32,
 }
@@ -38,11 +39,20 @@ impl TexStructure {
 			name: String::from("None"),
 			math_type: math_type,
 			proof: None,
+			equation_labels: Vec::new(),
 			ilabel: 0,
 			page: 0,
 		}
 	}
 	
+	pub fn add_equation(&mut self, eq_label: String) {
+		self.equation_labels.push(eq_label);
+	}
+
+	pub fn contains_equation(&self, eq_label: &String) -> bool {
+		self.equation_labels.contains(eq_label)
+	}
+
 	pub fn print(&self) -> String {
 
 		let rtype = match self.math_type {
