@@ -28,7 +28,6 @@ macro_rules! hashmap {
  */
 pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Document)> {
 
-
 	// get clean tex
 	let tmp_file = build_tmp_file(&filename, &folder)?;
 
@@ -93,15 +92,25 @@ fn build_tex_struct_collection(text: &String) -> HashMap<String, EnumTexType> {
 fn find_structs(text: &String, keyword: &String, tex_type: &EnumTexType, doc: &mut Document) {
 	
 	let str_regex = format!(r"(\\begin\{{{}\}})(.*?)(\\end\{{{}\}})", keyword, keyword);
-	// "(\\begin\{definition\})(.*?)(\\end\{definition\})"
 	let regex_def = Regex::new(&str_regex).unwrap();
 	for cap in regex_def.captures_iter(&text) {
-		//println!("{:?}", cap);
-		let strlabel = find_label(&cap[2].to_string());
-		//let cleantext = remove_label(cap[2].to_string(), &strlabel);
+		match find_label(&cap[2].to_string()) {
+			Some(strlabel) => {
+				//let cleantext = remove_label(cap[2].to_string(), &strlabel);
 
-		let def = TexStructure::new(String::clone(&strlabel), clone_tex_type(tex_type));
-		doc.push(strlabel, def);
+				// Create structure
+				let mut math_struct = TexStructure::new(String::clone(&strlabel), clone_tex_type(tex_type));
+
+				// Add equation labels
+				seeks_equations(&cap[2].to_string(), &mut math_struct);
+
+				// Add structure to document
+				doc.push(strlabel, math_struct);
+			}
+			None => {
+				continue
+			}
+		}
 	}
 }
 
@@ -120,7 +129,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 			Some(cap_label) => cap_label,
 			None => continue,
 		};
-		if doc.key_exist(&associated_th[1].to_string()) == false {
+		if doc.contains_key(&associated_th[1].to_string()) == false {
 			continue 'loop_proof;
 		}
 
@@ -140,10 +149,61 @@ fn process_proofs(text: &String, doc: &mut Document) {
 }
 
 
-fn find_label(text: &String) -> String {
-	
-	let re_label = Regex::new(r"(\\label\{)(.*?)(\})").unwrap();
-	let cap = re_label.captures(&text).unwrap();
+fn find_label(text: &String) -> Option<String> {
 
-	cap[2].to_string()
+	let re_label = Regex::new(r"(\\label\{)(.*?)(\})").unwrap();
+	match re_label.captures(&text) {
+    	Some(caps) => {
+        	let cap = caps.get(2).unwrap().as_str();
+        	return Some(cap.to_string())
+    	}
+    	None => {
+			return None
+    	}
+	}
+
+	//let cap = re_label.captures(&text).unwrap();
+	//cap[2].to_string()
+}
+
+
+fn seeks_equations(text: &String, math_struct: &mut TexStructure) {
+
+	let supported_eq_env = vec![
+		"equation".to_string(), 
+		"align".to_string(),
+		"multline".to_string(),
+		"gather".to_string(),
+		"eqnarray".to_string()
+		];
+
+	for elem in supported_eq_env.iter() {
+		//1. Create regex
+		let str_regex = format!(r"(\\begin\{{{}\}})(.*?)(\\end\{{{}\}})", elem, elem);
+		let regex_eq = Regex::new(&str_regex).unwrap();
+
+		// 2. Iterature over \begin{eq} ... \end{eq}
+		'eq_loop: for cap in regex_eq.captures_iter(&text) {
+			// While label are found, continue
+			let mut _eq_text = cap[2].to_string().clone();
+
+			'label_loop: loop {
+				// 2. find all label 
+				match find_label(&_eq_text) {
+					Some(strlabel) => {
+						// 2.1. remove found label
+						let full_label = "\\label{".to_owned() + &strlabel + "}";
+						_eq_text = _eq_text.replace(&full_label[..], "");
+
+						// 2.2. add label to structure
+						math_struct.add_equation(strlabel);
+					}
+					None => {
+						// If not label is found, quit loop
+						break 'label_loop;
+					}
+				}
+			}
+		}
+	}
 }

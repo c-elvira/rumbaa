@@ -76,8 +76,8 @@ fn export_json_nodes(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 
 	for key in doc.keys() {
 
-		let name = doc.get_name_from_key(key);
-		let group = doc.get_group_from_key(key);
+		let name = doc.get_name_from_key(key).unwrap();
+		let group = doc.get_group_from_key(key).unwrap();
 		// {"id": "Myriel", "group": 1},
 		if i == 0 {
 			writeln!(
@@ -113,38 +113,33 @@ fn export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 
 	let mut i = 0;
 	'loop_source: for key in doc.keys() {
-		// {"source": "Napoleon", "target": "Myriel", "value": 1},
-		let texstruct = doc.get(key.to_string());
-		let proof = match texstruct.get_proof() {
-			Some(expr) => expr,
-			None => continue 'loop_source,
-		 };
+		// Unwrap is safe since key comes from keys()
+		let vec_dependences = doc.get_vec_dependences(key).unwrap();
 
-		let name1 = doc.get_name_from_key(key);
-		'loop_target: for j in 0..proof.get_nblinks() {
-
-			if doc.key_exist(proof.get_link(j)) {
-
-				let name2 = doc.get_name_from_key(proof.get_link(j));
-				if name1 == name2 {
-					continue 'loop_target;
-				}
-				//println!("\t{} - {}", name1, name2);
-				if i == 0 {
-					writeln!(
-						jsonfile,
-						"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", name1, name2,
-					).unwrap();
-				}
-				else {
-					writeln!(
-						jsonfile,
-						"\t\t, {{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", name1, name2,
-					).unwrap();
-				}
-
-				i += 1;
+		// Unwrap is safe since key comes from doc.keys()
+		let name1 = doc.get_name_from_key(key).unwrap();
+		for elem in vec_dependences {
+			// {"source": "Napoleon", "target": "Myriel", "value": 1},
+			// Unwrap should be safe since doc.structs_contain_label return true
+			let name2 = doc.get_name_from_key(&elem).unwrap();
+			if name1 == name2 {
+				continue 'loop_source;
 			}
+
+			if i == 0 {
+				writeln!(
+					jsonfile,
+					"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", name1, name2,
+				).unwrap();
+			}
+			else {
+				writeln!(
+					jsonfile,
+					"\t\t, {{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}", name1, name2,
+				).unwrap();
+			}
+
+			i += 1;
 		}
 	}
 	
