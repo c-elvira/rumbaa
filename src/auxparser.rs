@@ -66,7 +66,7 @@ fn process_line(line: &String,  doc: &mut Document) {
 		match nb_match {
 			0 => {
 				strlabel = String::from(cap[1].to_string());
-				if doc.key_exist(&strlabel) == false {
+				if doc.contains_key(&strlabel) == false {
 					return
 				}
 			},
