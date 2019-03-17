@@ -40,7 +40,13 @@ impl Document {
 	}
 
 	pub fn key_exist(&self, key: &String) -> bool {
-		self.list_tex_struct.contains_key(key)
+		for (keylabel, tex_struct) in &self.list_tex_struct {
+			if tex_struct.contains_equation(&key) || *keylabel == *key {
+				return true
+			}
+			//self.list_tex_struct.contains_key(key)
+		}
+		return false
 	}
 
 	pub fn get(&self, key: String) -> &TexStructure {
