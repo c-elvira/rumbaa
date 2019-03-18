@@ -2,6 +2,7 @@ extern crate regex;
 
 use std::collections::HashMap;
 
+use std::fs::File;
 use std::io::{BufReader};
 use std::io::prelude::*;
 
@@ -9,7 +10,7 @@ use crate::texstruct::{TexStructure,EnumTexType,clone_tex_type,Proof};
 use crate::document::{Document};
 
 use regex::Regex;
-use crate::textmpfile::build_tmp_file;
+
 
 macro_rules! hashmap {
     ($( $key: expr => $val: expr ),*) => {{
@@ -26,19 +27,15 @@ macro_rules! hashmap {
  * @param e [description]
  * @return [description]
  */
-pub fn parse_tex(filename: &String, folder: &String) -> std::io::Result<(Document)> {
-
-	// get clean tex
-	let tmp_file = build_tmp_file(&filename, &folder)?;
+pub fn parse_tex(main_clean_file: &File, main_filename: &String, _folder: &String) -> std::io::Result<(Document)> {
 
 	// Process it
 	let mut contents = String::new();
-	let mut buf_reader = BufReader::new(tmp_file);
+	let mut buf_reader = BufReader::new(main_clean_file);
 	buf_reader.read_to_string(&mut contents).unwrap();
-	// tmp_file.read_to_string(&mut contents)
 
 		// Creating document
-	let mut tex_doc = Document::new(filename.to_string());
+	let mut tex_doc = Document::new(main_filename.to_string());
 
 		// Removing \n
 	let re = Regex::new(r"\n").unwrap();
