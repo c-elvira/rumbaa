@@ -38,8 +38,8 @@ pub fn parse_tex(main_clean_file: &File, main_filename: &String, _folder: &Strin
 	let mut tex_doc = Document::new(main_filename.to_string());
 
 		// Removing \n
-	let re = Regex::new(r"\n").unwrap();
-	let contents = re.replace_all(&contents, "").into_owned();
+	// let re = Regex::new(r"\n").unwrap();
+	// let contents = re.replace_all(&contents, "").into_owned();
 
 	// 1. Looking for:
 	// 	- definitions
