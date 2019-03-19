@@ -1,7 +1,7 @@
 mod texparser;
 mod document;
 mod texstruct;
-mod files_wrapper;
+mod preprocessing;
 mod auxparser;
 mod visualize;
 
@@ -50,7 +50,7 @@ fn main() {
 	
 	// 1. Wrap all files in one
 	//	 + Remove comments
-	let clean_file = match files_wrapper::wrap_and_preprocess(&filename, &data_folder) {
+	let clean_file = match preprocessing::wrap_and_preprocess(&filename, &data_folder) {
 		Ok(f) => f,
 		Err(_e) => panic!("{:?}", _e),
 	};

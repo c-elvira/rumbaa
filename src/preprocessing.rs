@@ -66,7 +66,6 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Resul
 
 
 fn read_and_remove_comments(filename: &String) -> Option<String> {
-
 	// File to process
 	let file_to_read = match File::open(filename) {
 		Ok(f) => f,
@@ -80,26 +79,54 @@ fn read_and_remove_comments(filename: &String) -> Option<String> {
 
 	// 1. Start reading line per line
 	let mut out = String::from("");
+	let mut in_long_comment = false;
 	for (_num, line) in buf_reader.lines().enumerate() {
 		let l = line.unwrap();
+		let mut add: String;
 
-		if l.contains("%") == false {
-			out += &l;
-		}
-		else if l.contains("%!TEX") == true {
+		// 1.1 Check comments
+		if l.contains("%!TEX") == true {
 			// Keep line if it contains latexmk command
-			out += &l;
+			add = l.clone();
 		}
-		else {
+		else if l.contains("%") == true {
 			// Contains a true comment. Try to remove it
 			let split = l.split("%");
 			let vec: Vec<&str> = split.collect();
 
-			out += vec[0]
+			add = vec[0].to_string();
 		}
+		else {
+			add = l.clone();
+		}
+
+		// 1.2 Check if in begin comments
+		if in_long_comment == true {
+			// If in long comment, check if comment ends
+			if add.contains("\\end{{comment}}") == true {
+				let split = add.split("\\end{{comment}}");
+				let vec: Vec<&str> = split.collect();
+				add = vec[1].to_string();
+				in_long_comment = false;
+			}
+			else {
+				continue;
+			}
+		}
+		else {
+			// check if long comment begins
+			if add.contains("\\begin{{comment}}") == true {
+				let split = add.split("\\end{{comment}}");
+				let vec: Vec<&str> = split.collect();
+				add = vec[0].to_string();
+				in_long_comment = true;
+			}			
+		}
+
+		out += &add;
 	}
 
-	// 2. Output
+	// 3. Output
 	Some(out)
 }
 
