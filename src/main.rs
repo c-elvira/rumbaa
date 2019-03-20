@@ -1,7 +1,7 @@
 mod texparser;
 mod document;
 mod texstruct;
-mod textmpfile;
+mod preprocessing;
 mod auxparser;
 mod visualize;
 
@@ -47,12 +47,21 @@ fn main() {
 	if verbose >= 1	{
 	    println!("Processing file {}:", filename);
 	}
+	
+	// 1. Wrap all files in one
+	//	 + Remove comments
+	let clean_file = match preprocessing::wrap_and_preprocess(&filename, &data_folder) {
+		Ok(f) => f,
+		Err(_e) => panic!("{:?}", _e),
+	};
 
-    let mut doc = match texparser::parse_tex(&filename, &data_folder) {
+	// 2. Parse latex
+    let mut doc = match texparser::parse_tex(&clean_file, &filename, &data_folder) {
     	Ok(d) => d,
     	Err(e) => panic!("An errror had occured while parsing tex file\n{}", e),
     };
 
+   	// 3. Parse aux
     match auxparser::parse_aux(&filename, &aux_folder, &mut doc, &verbose) {
     	Ok(()) => (),
     	Err(e) => println!("an error occurs while parsing aux file\n{}", e),
@@ -66,6 +75,7 @@ fn main() {
 	    println!("Exporting tex structure");
 	}
 
+	// 4. Visualization
     visualize::visualize(&doc, &output_folder)
     	.expect("Something went wrong when exporting tex document");
 }

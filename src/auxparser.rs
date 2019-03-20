@@ -15,7 +15,7 @@ use crate::document::{Document};
  * @param e [description]
  * @return [description]
  */
-pub fn parse_aux(filename: &String, folder: &String, mut doc: &mut Document, verbose: &u64) -> std::result::Result<(), Error>{
+pub fn parse_aux(filename: &String, folder: &String, mut doc: &mut Document, verbose: &u64) -> std::result::Result<(), Error> {
 	// 1. get aux path
 	let aux_path = get_aux_path(filename, folder);
 
@@ -35,7 +35,15 @@ pub fn parse_aux(filename: &String, folder: &String, mut doc: &mut Document, ver
 
 		if l.starts_with("\\newlabel") & l.contains("@cref") == false {
 			l = l.replace("{{", "{").replace("}}", "}");
-			process_line(&l, &mut doc);
+			
+			match process_line(&l, &mut doc) {
+				Ok(()) => (),
+				Err(e) => {
+					println!("Error while processing aux");
+					println!("Line: {:?}", l);
+					println!("{:?}", e);
+				}
+			};
 		}
 	}
 
@@ -53,7 +61,7 @@ fn get_aux_path(filename: &String, folder: &String) -> String {
     result
 }
 
-fn process_line(line: &String,  doc: &mut Document) {
+fn process_line(line: &String,  doc: &mut Document) -> std::result::Result<(), Error> {
 
 	let mut nb_match = 0;
 	let mut strlabel = String::from("");
@@ -67,17 +75,23 @@ fn process_line(line: &String,  doc: &mut Document) {
 			0 => {
 				strlabel = String::from(cap[1].to_string());
 				if doc.contains_key(&strlabel) == false {
-					return
+					break;
 				}
 			},
 			// Simple form
 			// \newlabel{def:label1}{{1}{1}}
 			1 => {
-				label_number = cap[1].parse::<i32>().unwrap();
+				label_number = match cap[1].parse::<i32>() {
+					Ok(i) => i,
+					Err(_) => break,
+				};
 				doc.set_label_number(&strlabel, label_number);
 			},
 			2 => {
-				label_page   = cap[1].parse::<i32>().unwrap();
+				label_page = match cap[1].parse::<i32>() {
+					Ok(i) => i,
+					Err(_) => break,
+				};
 				doc.set_page(&strlabel, label_page);
 			},
 			// More complicated form
@@ -94,10 +108,12 @@ fn process_line(line: &String,  doc: &mut Document) {
 			},
 			_ => {
 				// Not implemented yet
-				return
+				break;
 			},
 		}
 
 		nb_match += 1;
 	}
+
+	Ok(())
 }
