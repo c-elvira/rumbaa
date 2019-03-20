@@ -35,7 +35,8 @@ mod tests {
 		let vec = doc.get_vec_dependences(&label).unwrap();
 
 		// 2. Delete file
-		match remove_file("tests/datas/rtex_tmp.tex") {
+		let tmp_file_name = rumbaa::preprocessing::get_tmp_filename(&filename, &data_folder);
+		match remove_file(tmp_file_name) {
 			Ok(()) => (),
 			Err(_) => (),
 		};
@@ -53,7 +54,8 @@ mod tests {
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 2. Delete file
-		match remove_file("tests/datas/rtex_tmp.tex") {
+		let tmp_file_name = rumbaa::preprocessing::get_tmp_filename(&filename, &data_folder);
+		match remove_file(tmp_file_name) {
 			Ok(()) => (),
 			Err(_) => (),
 		};

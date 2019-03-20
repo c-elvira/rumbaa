@@ -5,6 +5,8 @@
 
 texdata/main.pdf
 texdata/aux/*.pdf
+texdata/*
+test_a_coder.md
 
 # Created by https://www.gitignore.io/api/rust,latex
 # Edit at https://www.gitignore.io/?templates=rust,latex

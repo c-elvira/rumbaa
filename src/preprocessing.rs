@@ -51,7 +51,7 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Resul
 
 
 	// Copy everything in output file
-	let tmp_file_name = format!("{}{}", folder, "rtex_tmp.tex");
+	let tmp_file_name = get_tmp_filename(main_tex_filename, folder);
 	delete_file_if_exist(&tmp_file_name);
 
 	let mut main_file = OpenOptions::new()
@@ -71,7 +71,6 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Resul
 
 	return Ok(main_file)
 }
-
 
 fn read_and_remove_comments(filename: &String) -> Option<String> {
 	// File to process
@@ -149,3 +148,9 @@ fn delete_file_if_exist(filename: &String) {
 		Err(_e) => return,
 	};
 }
+
+pub fn get_tmp_filename(main_tex_filename: &String, folder: &String) -> String {
+	format!("{}{}{}{}",
+		folder, "rumbaa_", main_tex_filename, ".tex")
+}
+
