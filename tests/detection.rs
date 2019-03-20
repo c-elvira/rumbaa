@@ -65,4 +65,28 @@ mod tests {
 		assert_eq!(doc.contains_key(&"def:commented".to_string()), false);
 		assert_eq!(doc.contains_key(&"th:commented".to_string()), false);
 	}
+
+	/**
+	 * @brief commented \input causes crash
+	 * @details Associated to Issue #11
+	 * @return
+	 */
+	#[test]
+	fn test_input_in_comment() {
+		let filename = String::from("input_in_comment.tex");
+		let data_folder = String::from("tests/datas/");
+
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder).unwrap();
+		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
+
+		// 2. Delete file
+		let tmp_file_name = rumbaa::preprocessing::get_tmp_filename(&filename, &data_folder);
+		match remove_file(tmp_file_name) {
+			Ok(()) => (),
+			Err(_) => (),
+		};
+
+		// 3. Test
+		assert_eq!(doc.contains_key(&"th".to_string()), true);
+	}
 }
