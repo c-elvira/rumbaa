@@ -118,10 +118,13 @@ fn export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 
 		// Unwrap is safe since key comes from doc.keys()
 		let name1 = doc.get_name_from_key(key).unwrap();
-		for elem in vec_dependences {
+		'loop_dep: for elem in vec_dependences {
 			// {"source": "Napoleon", "target": "Myriel", "value": 1},
 			// Unwrap should be safe since doc.structs_contain_label return true
-			let name2 = doc.get_name_from_key(&elem).unwrap();
+			let name2 = match doc.get_name_from_key(&elem) {
+				Some(s) => s,
+				None => continue 'loop_dep,
+			};
 			if name1 == name2 {
 				continue 'loop_source;
 			}

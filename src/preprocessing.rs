@@ -1,7 +1,7 @@
 extern crate tempfile;
 extern crate regex;
 
-use std::fs::{File,OpenOptions};
+use std::fs::{File,OpenOptions,remove_file};
 use std::io::{Write,BufReader,Seek,Error,SeekFrom};
 use std::io::prelude::*;
 use regex::Regex;
@@ -52,10 +52,13 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Resul
 
 	// Copy everything in output file
 	let tmp_file_name = format!("{}{}", folder, "rtex_tmp.tex");
+	delete_file_if_exist(&tmp_file_name);
+
 	let mut main_file = OpenOptions::new()
 		.create(true)
         .read(true)
         .write(true)
+        .append(false)
         .open(tmp_file_name)
         ?;
 
@@ -140,3 +143,9 @@ fn assembles_filename(name :&String, folder: &String) -> String {
 	return folder.clone() + &name.clone()
 }
 
+fn delete_file_if_exist(filename: &String) {
+	match remove_file(&filename) {
+		Ok(()) => return,
+		Err(_e) => return,
+	};
+}

@@ -37,10 +37,6 @@ pub fn parse_tex(main_clean_file: &File, main_filename: &String, _folder: &Strin
 		// Creating document
 	let mut tex_doc = Document::new(main_filename.to_string());
 
-		// Removing \n
-	// let re = Regex::new(r"\n").unwrap();
-	// let contents = re.replace_all(&contents, "").into_owned();
-
 	// 1. Looking for:
 	// 	- definitions
 	//	- theorems
@@ -126,6 +122,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 			Some(cap_label) => cap_label,
 			None => continue,
 		};
+		println!("parsing {}", &associated_th[1]);
 		if doc.contains_key(&associated_th[1].to_string()) == false {
 			continue 'loop_proof;
 		}
@@ -139,6 +136,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 		for cap_ref in regex_ref.captures_iter(&content) {
 			proof.add_link(cap_ref[1].to_string());
 		}
+		//println!(" - {:?}", proof.get_nblinks());
 
 		// 4. Transfert ownership to doc
 		doc.set_proof(&associated_th[1].to_string(), proof);

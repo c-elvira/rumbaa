@@ -38,10 +38,10 @@ pub fn parse_aux(filename: &String, folder: &String, mut doc: &mut Document, ver
 			
 			match process_line(&l, &mut doc) {
 				Ok(()) => (),
-				Err(_e) => {
+				Err(e) => {
 					println!("Error while processing aux");
 					println!("Line: {:?}", l);
-					println!("{:?}", _e);
+					println!("{:?}", e);
 				}
 			};
 		}
@@ -83,14 +83,14 @@ fn process_line(line: &String,  doc: &mut Document) -> std::result::Result<(), E
 			1 => {
 				label_number = match cap[1].parse::<i32>() {
 					Ok(i) => i,
-					Err(e) => break,
+					Err(_) => break,
 				};
 				doc.set_label_number(&strlabel, label_number);
 			},
 			2 => {
 				label_page = match cap[1].parse::<i32>() {
 					Ok(i) => i,
-					Err(e) => break,
+					Err(_) => break,
 				};
 				doc.set_page(&strlabel, label_page);
 			},
