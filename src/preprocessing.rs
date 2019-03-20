@@ -44,6 +44,11 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Resul
 
 	   	tex_content = tex_content.replace(&caps[0], &text_file);
 	}
+	
+	// Removing \n
+	let re = Regex::new(r"\n").unwrap();
+	tex_content = re.replace_all(&tex_content, "").into_owned();
+
 
 	// Copy everything in output file
 	let tmp_file_name = format!("{}{}", folder, "rtex_tmp.tex");
@@ -103,8 +108,8 @@ fn read_and_remove_comments(filename: &String) -> Option<String> {
 		// 1.2 Check if in begin comments
 		if in_long_comment == true {
 			// If in long comment, check if comment ends
-			if add.contains("\\end{{comment}}") == true {
-				let split = add.split("\\end{{comment}}");
+			if add.contains("\\end{comment}") == true {
+				let split = add.split("\\end{comment}");
 				let vec: Vec<&str> = split.collect();
 				add = vec[1].to_string();
 				in_long_comment = false;
@@ -115,10 +120,11 @@ fn read_and_remove_comments(filename: &String) -> Option<String> {
 		}
 		else {
 			// check if long comment begins
-			if add.contains("\\begin{{comment}}") == true {
-				let split = add.split("\\end{{comment}}");
+			if add.contains("\\begin{comment}") == true {
+				let split = add.split("\\begin{comment}");
 				let vec: Vec<&str> = split.collect();
 				add = vec[0].to_string();
+
 				in_long_comment = true;
 			}			
 		}
