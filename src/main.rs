@@ -35,6 +35,9 @@ fn main() {
 		Some(f) => format_dir_name(String::from(f)),
 		None 	=> String::from(""),
 	};
+
+	let _save_for_arxiv = matches.is_present("arxiv");
+
 	match create_dir_all(&output_folder) {
 		Ok(_) => (),
 		Err(_) => panic!("A problem occurs with argument -o:\n{}\n

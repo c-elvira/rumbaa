@@ -25,6 +25,11 @@ args:
         value_name: OUT FOLDER
         help: Sets folder for outputs
         takes_value: true
+    - arxiv:
+        short: x
+        long: arxiv
+        help: save clean file
+        takes_value: false
     - verbose:
         short: v
         long: verbose
