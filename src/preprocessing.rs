@@ -7,23 +7,23 @@ use std::io::prelude::*;
 use regex::Regex;
 
 
-pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Result<File, Error> {
+pub fn wrap_and_preprocess(main_tex_filename: &String, out_filename: &String, folder: &String) -> Result<File, Error> {
 
 	// 1. Create arXiv file
-	let arxiv_filename = assembles_filename(&"arxiv.tex".to_string(), folder);
+	//let arxiv_filename = assembles_filename(&"arxiv.tex".to_string(), folder);
 	let mut arxiv_file = OpenOptions::new()
 		.create(true)
 		.read(true)
 		.write(true)
 		.append(false)
-		.open(&arxiv_filename).unwrap();
+		.open(&out_filename).unwrap();
 
 	// 2. open main file
-	let main_tex_file = match File::open(main_tex_filename) {
+	let main_tex_file = match File::open(String::clone(folder) + main_tex_filename) {
 		Ok(f) => f,
 		Err(_e) => {
 			// File not found
-			println!("Warning: {} not found",main_tex_filename);
+
 			panic!("Unable to find {}", String::clone(folder) + main_tex_filename)
 		}
 	};
@@ -35,6 +35,108 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Resul
 	return Ok(arxiv_file)
 }
 
+fn _clean_and_copy_file(dest_file: &mut File, input_file: &File, folder: &String) {
+	let buf_reader = BufReader::new(input_file);
+
+	for (_num, l) in buf_reader.lines().enumerate() {
+		let mut line = _clean_line(&l.unwrap());
+
+		'loop_input: loop {
+			match _contain_input_file(&line) {
+				Some(cmd_input) => {
+					let latex_cmd = cmd_input.0;
+					let filename = cmd_input.1;
+					line = line.replace(&latex_cmd, "");
+
+			   		let input_file_name = folder.to_owned() + &filename + &String::from(".tex");
+					match File::open(&input_file_name) {
+						Ok(f) => {
+							_clean_and_copy_file(dest_file, &f, &folder);
+						},
+						Err(_) => {
+							// File not found
+							println!("Warning: {} not found", filename);
+						}
+					};
+				}
+				None => {
+					break 'loop_input
+				}
+			}
+		};
+
+		writeln!(dest_file, "{}", line).unwrap();
+	}
+}
+
+fn _clean_line(line: &String) -> String {
+
+	let mut out: String;
+
+	// 1.1 Check comments
+	if line.contains("%!TEX") == true {
+		// Keep line if it contains latexmk command
+		out = line.clone();
+	}
+	else if line.contains("%") == true {
+		// Contains a true comment. Try to remove it
+		let split = line.split("%");
+		let vec: Vec<&str> = split.collect();
+
+		out = vec[0].to_string();
+	}
+	else {
+		out = line.clone();
+	}
+
+	return out
+}
+
+fn _contain_input_file(line: &String) -> Option<(String, String)> {
+
+	let re = Regex::new(r"(\\input\{)(.*?)(\})").unwrap();
+
+	   // Modify content (reaplace input)
+	match re.captures(&line) {
+		Some(cap) => {
+			// cap[0].to_string(): full command
+			// cap[2].to_string(): label
+			return Some((cap[0].to_string(), cap[2].to_string()))
+		},
+		None => {
+			return None
+		},
+	};
+}
+
+fn assembles_filename(name :&String, folder: &String) -> String {
+	return folder.clone() + &name.clone()
+}
+
+pub fn get_tmp_filename(main_tex_filename: &String, folder: &String) -> String {
+	format!("{}{}{}{}",
+		folder, "rumbaa_", main_tex_filename, ".tex")
+}
+
+fn delete_file_if_exist(filename: &String) {
+	match remove_file(&filename) {
+		Ok(()) => return,
+		Err(_e) => return,
+	};
+}
+
+
+
+
+
+
+
+
+/* ---------------------------------------------
+		
+					Dead code
+
+------------------------------------------------ */
 
 pub fn old_wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> Result<File, Error> {
 
@@ -99,78 +201,6 @@ pub fn old_wrap_and_preprocess(main_tex_filename: &String, folder: &String) -> R
 	main_file.seek(SeekFrom::Start(0)).unwrap();
 
 	return Ok(main_file)
-}
-
-fn _clean_and_copy_file(dest_file: &mut File, input_file: &File, folder: &String) {
-	let buf_reader = BufReader::new(input_file);
-
-	for (_num, l) in buf_reader.lines().enumerate() {
-		let mut line = _clean_line(&l.unwrap());
-
-		'loop_input: loop {
-			match _contain_input_file(&line) {
-				Some(cmd_input) => {
-					let latex_cmd = cmd_input.0;
-					let filename = cmd_input.1;
-					line = line.replace(&latex_cmd, "");
-
-			   		let input_file_name = folder.to_owned() + &filename + &String::from(".tex");
-					match File::open(&input_file_name) {
-						Ok(f) => {
-							_clean_and_copy_file(dest_file, &f, &folder);
-						},
-						Err(_) => {
-							// File not found
-							println!("Warning: {} not found", filename);
-						}
-					};
-				}
-				None => {
-					break 'loop_input
-				}
-			}
-		};
-
-		writeln!(dest_file, "{}\n", line).unwrap();
-	}
-}
-
-fn _clean_line(line: &String) -> String {
-
-	let mut out: String;
-
-	// 1.1 Check comments
-	if line.contains("%!TEX") == true {
-		// Keep line if it contains latexmk command
-		out = line.clone();
-	}
-	else if line.contains("%") == true {
-		// Contains a true comment. Try to remove it
-		let split = line.split("%");
-		let vec: Vec<&str> = split.collect();
-
-		out = vec[0].to_string();
-	}
-	else {
-		out = line.clone();
-	}
-
-	return out
-}
-
-fn _contain_input_file(line: &String) -> Option<(String, String)> {
-
-	let re = Regex::new(r"(\\input\{)(.*?)(\})").unwrap();
-
-	   // Modify content (reaplace input)
-	match re.captures(&line) {
-		Some(cap) => {
-			return Some((cap[0].to_string(), cap[1].to_string()))
-		},
-		None => {
-			return None
-		},
-	};
 }
 
 fn read_and_remove_comments(filename: &String) -> Option<String> {
@@ -238,20 +268,3 @@ fn read_and_remove_comments(filename: &String) -> Option<String> {
 	// 3. Output
 	Some(out)
 }
-
-fn assembles_filename(name :&String, folder: &String) -> String {
-	return folder.clone() + &name.clone()
-}
-
-fn delete_file_if_exist(filename: &String) {
-	match remove_file(&filename) {
-		Ok(()) => return,
-		Err(_e) => return,
-	};
-}
-
-pub fn get_tmp_filename(main_tex_filename: &String, folder: &String) -> String {
-	format!("{}{}{}{}",
-		folder, "rumbaa_", main_tex_filename, ".tex")
-}
-

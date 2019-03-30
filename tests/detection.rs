@@ -27,7 +27,7 @@ mod tests {
 		let filename = String::from("equation_in_def.tex");
 		let data_folder = String::from("tests/datas/");
 
-		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder).unwrap();
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder, &false).unwrap();
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 1. test
@@ -50,7 +50,7 @@ mod tests {
 		let filename = String::from("remove_comments.tex");
 		let data_folder = String::from("tests/datas/");
 
-		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder).unwrap();
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder, &false).unwrap();
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 2. Delete file
@@ -76,7 +76,7 @@ mod tests {
 		let filename = String::from("input_in_comment.tex");
 		let data_folder = String::from("tests/datas/");
 
-		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder).unwrap();
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder, &false).unwrap();
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 2. Delete file
