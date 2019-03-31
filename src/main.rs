@@ -54,6 +54,7 @@ fn main() {
 	
 	// 1. Wrap all files in one
 	//	 + Remove comments
+	delete_file_if_exist(&arxiv_filename);
 	let clean_file = match preprocessing::wrap_and_preprocess(&filename, &arxiv_filename, &data_folder) {
 		Ok(f) => f,
 		Err(_e) => panic!("{:?}", _e),

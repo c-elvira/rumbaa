@@ -19,12 +19,12 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, out_filename: &String, fo
 		.open(&out_filename).unwrap();
 
 	// 2. open main file
-	let main_tex_file = match File::open(String::clone(folder) + main_tex_filename) {
+	let path_to_main = String::clone(folder) + main_tex_filename;
+	let main_tex_file = match File::open(&path_to_main) {
 		Ok(f) => f,
 		Err(_e) => {
 			// File not found
-
-			panic!("Unable to find {}", String::clone(folder) + main_tex_filename)
+			panic!("Unable to find {}", &path_to_main)
 		}
 	};
 
@@ -36,10 +36,34 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, out_filename: &String, fo
 }
 
 fn _clean_and_copy_file(dest_file: &mut File, input_file: &File, folder: &String) {
-	let buf_reader = BufReader::new(input_file);
+	// detect \begin{comment} ... \end{comment}
+	let mut in_long_comment = false;
 
-	for (_num, l) in buf_reader.lines().enumerate() {
+	// 1. Start loop
+	let buf_reader = BufReader::new(input_file);
+	'loop_lines: for (_num, l) in buf_reader.lines().enumerate() {
 		let mut line = _clean_line(&l.unwrap());
+
+		if in_long_comment {
+			if line.contains("\\end{comment}") == true {
+				let split = line.split("\\end{comment}");
+				let vec: Vec<&str> = split.collect();
+				line = vec[1].to_string();
+				in_long_comment = false;
+			}
+			else {
+				continue 'loop_lines;
+			}
+		}
+		else {
+			if line.contains("\\begin{comment}") == true {
+				let split = line.split("\\begin{comment}");
+				let vec: Vec<&str> = split.collect();
+				line = vec[0].to_string();
+
+				in_long_comment = true;
+			}
+		}
 
 		'loop_input: loop {
 			match _contain_input_file(&line) {
