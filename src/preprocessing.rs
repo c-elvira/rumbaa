@@ -142,7 +142,9 @@ mod process_text_internal {
 	}
 
 	fn is_blank_line(line: &String) -> bool {
-		if line == "" {
+		let data = line.replace(" ", "");
+		let data = data.replace("\t", "");
+		if data == "" {
 			return true
 		}
 		false
