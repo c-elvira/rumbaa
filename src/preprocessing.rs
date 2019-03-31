@@ -1,10 +1,8 @@
 extern crate tempfile;
 extern crate regex;
 
-use std::fs::{File,OpenOptions,remove_file};
-use std::io::{Write,BufReader,Seek,Error,SeekFrom};
-use std::io::prelude::*;
-use regex::Regex;
+use std::fs::{File,OpenOptions};
+use std::io::{Error,Seek,SeekFrom};
 
 
 pub fn wrap_and_preprocess(main_tex_filename: &String, out_filename: &String, folder: &String) -> Result<File, Error> {
@@ -29,122 +27,115 @@ pub fn wrap_and_preprocess(main_tex_filename: &String, out_filename: &String, fo
 	};
 
 	// 3. recursively include tex in arxiv file
-	_clean_and_copy_file(&mut arxiv_file, &main_tex_file, &folder);
+	process_text_internal::clean_and_copy_file(&mut arxiv_file, &main_tex_file, &folder);
 
 	// 4. return
+	arxiv_file.seek(SeekFrom::Start(0)).unwrap();
 	return Ok(arxiv_file)
 }
 
-fn _clean_and_copy_file(dest_file: &mut File, input_file: &File, folder: &String) {
-	// detect \begin{comment} ... \end{comment}
-	let mut in_long_comment = false;
+mod process_text_internal {
 
-	// 1. Start loop
-	let buf_reader = BufReader::new(input_file);
-	'loop_lines: for (_num, l) in buf_reader.lines().enumerate() {
-		let mut line = _clean_line(&l.unwrap());
+	use std::fs::{File};
+	use std::io::{Write,BufReader};
+	use std::io::prelude::*;
+	use regex::Regex;
 
-		if in_long_comment {
-			if line.contains("\\end{comment}") == true {
-				let split = line.split("\\end{comment}");
-				let vec: Vec<&str> = split.collect();
-				line = vec[1].to_string();
-				in_long_comment = false;
+	pub fn clean_and_copy_file(dest_file: &mut File, input_file: &File, folder: &String) {
+		// detect \begin{comment} ... \end{comment}
+		let mut in_long_comment = false;
+
+		// 1. Start loop
+		let buf_reader = BufReader::new(input_file);
+		'loop_lines: for (_num, l) in buf_reader.lines().enumerate() {
+			let mut line = clean_line(&l.unwrap());
+
+			if in_long_comment {
+				if line.contains("\\end{comment}") == true {
+					let split = line.split("\\end{comment}");
+					let vec: Vec<&str> = split.collect();
+					line = vec[1].to_string();
+					in_long_comment = false;
+				}
+				else {
+					continue 'loop_lines;
+				}
 			}
 			else {
-				continue 'loop_lines;
+				if line.contains("\\begin{comment}") == true {
+					let split = line.split("\\begin{comment}");
+					let vec: Vec<&str> = split.collect();
+					line = vec[0].to_string();
+
+					in_long_comment = true;
+				}
 			}
+
+			'loop_input: loop {
+				match contain_input_file(&line) {
+					Some(cmd_input) => {
+						let latex_cmd = cmd_input.0;
+						let filename = cmd_input.1;
+						line = line.replace(&latex_cmd, "");
+
+				   		let input_file_name = folder.to_owned() + &filename + &String::from(".tex");
+						match File::open(&input_file_name) {
+							Ok(f) => {
+								clean_and_copy_file(dest_file, &f, &folder);
+							},
+							Err(_) => {
+								// File not found
+								println!("Warning: {} not found", filename);
+							}
+						};
+					}
+					None => {
+						break 'loop_input
+					}
+				}
+			};
+
+			writeln!(dest_file, "{}", line).unwrap();
+		}
+	}
+
+	fn clean_line(line: &String) -> String {
+
+		let mut out: String;
+
+		// 1.1 Check comments
+		if line.contains("%!TEX") == true {
+			// Keep line if it contains latexmk command
+			out = line.clone();
+		}
+		else if line.contains("%") == true {
+			// Contains a true comment. Try to remove it
+			let split = line.split("%");
+			let vec: Vec<&str> = split.collect();
+
+			out = vec[0].to_string();
 		}
 		else {
-			if line.contains("\\begin{comment}") == true {
-				let split = line.split("\\begin{comment}");
-				let vec: Vec<&str> = split.collect();
-				line = vec[0].to_string();
-
-				in_long_comment = true;
-			}
+			out = line.clone();
 		}
 
-		'loop_input: loop {
-			match _contain_input_file(&line) {
-				Some(cmd_input) => {
-					let latex_cmd = cmd_input.0;
-					let filename = cmd_input.1;
-					line = line.replace(&latex_cmd, "");
+		return out
+	}
 
-			   		let input_file_name = folder.to_owned() + &filename + &String::from(".tex");
-					match File::open(&input_file_name) {
-						Ok(f) => {
-							_clean_and_copy_file(dest_file, &f, &folder);
-						},
-						Err(_) => {
-							// File not found
-							println!("Warning: {} not found", filename);
-						}
-					};
-				}
-				None => {
-					break 'loop_input
-				}
-			}
+	fn contain_input_file(line: &String) -> Option<(String, String)> {
+
+		let re = Regex::new(r"(\\input\{)(.*?)(\})").unwrap();
+
+		   // Modify content (reaplace input)
+		match re.captures(&line) {
+			Some(cap) => {
+				// cap[0].to_string(): full command
+				// cap[2].to_string(): label
+				return Some((cap[0].to_string(), cap[2].to_string()))
+			},
+			None => {
+				return None
+			},
 		};
-
-		writeln!(dest_file, "{}", line).unwrap();
 	}
-}
-
-fn _clean_line(line: &String) -> String {
-
-	let mut out: String;
-
-	// 1.1 Check comments
-	if line.contains("%!TEX") == true {
-		// Keep line if it contains latexmk command
-		out = line.clone();
-	}
-	else if line.contains("%") == true {
-		// Contains a true comment. Try to remove it
-		let split = line.split("%");
-		let vec: Vec<&str> = split.collect();
-
-		out = vec[0].to_string();
-	}
-	else {
-		out = line.clone();
-	}
-
-	return out
-}
-
-fn _contain_input_file(line: &String) -> Option<(String, String)> {
-
-	let re = Regex::new(r"(\\input\{)(.*?)(\})").unwrap();
-
-	   // Modify content (reaplace input)
-	match re.captures(&line) {
-		Some(cap) => {
-			// cap[0].to_string(): full command
-			// cap[2].to_string(): label
-			return Some((cap[0].to_string(), cap[2].to_string()))
-		},
-		None => {
-			return None
-		},
-	};
-}
-
-fn assembles_filename(name :&String, folder: &String) -> String {
-	return folder.clone() + &name.clone()
-}
-
-pub fn get_tmp_filename(main_tex_filename: &String, folder: &String) -> String {
-	format!("{}{}{}{}",
-		folder, "rumbaa_", main_tex_filename, ".tex")
-}
-
-fn delete_file_if_exist(filename: &String) {
-	match remove_file(&filename) {
-		Ok(()) => return,
-		Err(_e) => return,
-	};
 }

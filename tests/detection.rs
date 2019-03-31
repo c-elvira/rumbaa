@@ -26,8 +26,9 @@ mod tests {
 	fn test_equation_in_def() {
 		let filename = String::from("equation_in_def.tex");
 		let data_folder = String::from("tests/datas/");
+		let tmp_file_name = String::from("tmp_eq_in_def.tex");
 
-		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder, &false).unwrap();
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 1. test
@@ -35,7 +36,6 @@ mod tests {
 		let vec = doc.get_vec_dependences(&label).unwrap();
 
 		// 2. Delete file
-		let tmp_file_name = rumbaa::preprocessing::get_tmp_filename(&filename, &data_folder);
 		match remove_file(tmp_file_name) {
 			Ok(()) => (),
 			Err(_) => (),
@@ -49,12 +49,12 @@ mod tests {
 	fn test_remove_comments() {
 		let filename = String::from("remove_comments.tex");
 		let data_folder = String::from("tests/datas/");
+		let tmp_file_name = String::from("tmp_remove_comments.tex");
 
-		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder, &false).unwrap();
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 2. Delete file
-		let tmp_file_name = rumbaa::preprocessing::get_tmp_filename(&filename, &data_folder);
 		match remove_file(tmp_file_name) {
 			Ok(()) => (),
 			Err(_) => (),
@@ -75,12 +75,12 @@ mod tests {
 	fn test_input_in_comment() {
 		let filename = String::from("input_in_comment.tex");
 		let data_folder = String::from("tests/datas/");
+		let tmp_file_name = data_folder.to_owned() + &String::from("tmp_input_in_comment.tex");
 
-		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &data_folder, &false).unwrap();
+		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
 		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
 
 		// 2. Delete file
-		let tmp_file_name = rumbaa::preprocessing::get_tmp_filename(&filename, &data_folder);
 		match remove_file(tmp_file_name) {
 			Ok(()) => (),
 			Err(_) => (),
