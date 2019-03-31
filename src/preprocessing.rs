@@ -95,7 +95,9 @@ mod process_text_internal {
 				}
 			};
 
-			writeln!(dest_file, "{}", line).unwrap();
+			if !is_blank_line(&line) {
+				writeln!(dest_file, "{}", line).unwrap();
+			}
 		}
 	}
 
@@ -137,5 +139,34 @@ mod process_text_internal {
 				return None
 			},
 		};
+	}
+
+	fn is_blank_line(line: &String) -> bool {
+		if line == "" {
+			return true
+		}
+		false
+	}
+
+	#[cfg(test)]
+	mod tests {
+
+	    #[test]
+	    fn detect_blankline_1() {
+	    	let line = String::from("");
+	        assert_eq!(crate::preprocessing::process_text_internal::is_blank_line(&line), true);
+	    }
+
+	    #[test]
+	    fn detect_blankline_2() {
+	    	let line = String::from("   ");
+	        assert_eq!(crate::preprocessing::process_text_internal::is_blank_line(&line), true);
+	    }
+
+	    #[test]
+	    fn detect_blankline_3() {
+	    	let line = String::from("	");
+	        assert_eq!(crate::preprocessing::process_text_internal::is_blank_line(&line), true);
+	    }
 	}
 }
