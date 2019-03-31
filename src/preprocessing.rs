@@ -48,7 +48,15 @@ mod process_text_internal {
 		// 1. Start loop
 		let buf_reader = BufReader::new(input_file);
 		'loop_lines: for (_num, l) in buf_reader.lines().enumerate() {
-			let mut line = clean_line(&l.unwrap());
+			let mut line = l.unwrap();
+
+			// If the line is empty, it might be one purpose :)
+			if !in_long_comment && is_blank_line(&line) {
+				writeln!(dest_file, "{}", line).unwrap();
+			}
+
+			// otherwise, process line
+			line = clean_line(&line);
 
 			if in_long_comment {
 				if line.contains("\\end{comment}") == true {
