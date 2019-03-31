@@ -48,7 +48,15 @@ mod process_text_internal {
 		// 1. Start loop
 		let buf_reader = BufReader::new(input_file);
 		'loop_lines: for (_num, l) in buf_reader.lines().enumerate() {
-			let mut line = clean_line(&l.unwrap());
+			let mut line = l.unwrap();
+
+			// If the line is empty, it might be one purpose :)
+			if !in_long_comment && is_blank_line(&line) {
+				writeln!(dest_file, "{}", line).unwrap();
+			}
+
+			// otherwise, process line
+			line = clean_line(&line);
 
 			if in_long_comment {
 				if line.contains("\\end{comment}") == true {
@@ -95,7 +103,9 @@ mod process_text_internal {
 				}
 			};
 
-			writeln!(dest_file, "{}", line).unwrap();
+			if !is_blank_line(&line) {
+				writeln!(dest_file, "{}", line).unwrap();
+			}
 		}
 	}
 
@@ -137,5 +147,36 @@ mod process_text_internal {
 				return None
 			},
 		};
+	}
+
+	fn is_blank_line(line: &String) -> bool {
+		let data = line.replace(" ", "");
+		let data = data.replace("\t", "");
+		if data == "" {
+			return true
+		}
+		false
+	}
+
+	#[cfg(test)]
+	mod tests {
+
+	    #[test]
+	    fn detect_blankline_1() {
+	    	let line = String::from("");
+	        assert_eq!(crate::preprocessing::process_text_internal::is_blank_line(&line), true);
+	    }
+
+	    #[test]
+	    fn detect_blankline_2() {
+	    	let line = String::from("   ");
+	        assert_eq!(crate::preprocessing::process_text_internal::is_blank_line(&line), true);
+	    }
+
+	    #[test]
+	    fn detect_blankline_3() {
+	    	let line = String::from("	");
+	        assert_eq!(crate::preprocessing::process_text_internal::is_blank_line(&line), true);
+	    }
 	}
 }
