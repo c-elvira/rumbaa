@@ -1,4 +1,5 @@
 extern crate regex;
+extern crate log;
 
 use std::collections::HashMap;
 
@@ -126,7 +127,7 @@ fn process_proofs(text: &String, doc: &mut Document) {
 			Some(cap_label) => cap_label,
 			None => continue,
 		};
-		println!("parsing {}", &associated_th[1]);
+		log!(log::Level::Info, "parsing {}", &associated_th[1]);
 		if doc.contains_key(&associated_th[1].to_string()) == false {
 			continue 'loop_proof;
 		}
@@ -138,9 +139,11 @@ fn process_proofs(text: &String, doc: &mut Document) {
 		let ref_patern = r"ref\{(.*?)\}";
 		let regex_ref = Regex::new(ref_patern).unwrap();
 		for cap_ref in regex_ref.captures_iter(&content) {
+			log!(log::Level::Info, "proof of {}: adding - {}", 
+				&associated_th[1],
+				&cap_ref[1].to_string());
 			proof.add_link(cap_ref[1].to_string());
 		}
-		//println!(" - {:?}", proof.get_nblinks());
 
 		// 4. Transfert ownership to doc
 		doc.set_proof(&associated_th[1].to_string(), proof);
