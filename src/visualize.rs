@@ -82,13 +82,13 @@ fn export_json_nodes(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 		if i == 0 {
 			writeln!(
 				jsonfile,
-				"\t\t{{\"id\": \"{}\", \"group\": {}}}", name, group
+				"\t\t{{\"id\": \"{}\", \"label\": \"{}\", \"group\": {}}}", name, key, group
 			).unwrap();
 		}
 		else {
 			writeln!(
 				jsonfile,
-				"\t\t, {{\"id\": \"{}\", \"group\": {}}}", name, group
+				"\t\t, {{\"id\": \"{}\", \"label\": \"{}\", \"group\": {}}}", name, key, group
 			).unwrap();
 		}
 
@@ -126,7 +126,7 @@ fn export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> {
 				None => continue 'loop_dep,
 			};
 			if name1 == name2 {
-				continue 'loop_source;
+				continue 'loop_dep;
 			}
 
 			if i == 0 {

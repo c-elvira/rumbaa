@@ -5,15 +5,27 @@ mod preprocessing;
 mod auxparser;
 mod visualize;
 
-#[macro_use]
-extern crate clap;
+#[macro_use] extern crate clap;
+#[macro_use] extern crate log;
 
+extern crate simplelog;
+
+use simplelog::*;
 use clap::{App};
-use std::fs::{create_dir_all,remove_file};
+use std::fs::{File,create_dir_all,remove_file};
 
 //use std::env;
 
 fn main() {
+
+	// 0. Create logger
+    CombinedLogger::init(
+        vec![
+            TermLogger::new(LevelFilter::Trace, Config::default()).unwrap(),
+            WriteLogger::new(LevelFilter::Trace, Config::default(), File::create("rumbaa.log").unwrap()),
+        ]
+    ).unwrap();
+    trace!("Processing inputs");
 
 	// 1. Processing input arguments
     let yaml = load_yaml!("cli.yml");
@@ -37,6 +49,9 @@ fn main() {
 	};
 
 	let save_to_arxiv = matches.is_present("arxiv");
+	if save_to_arxiv{
+	    info!("Saving clean arXiv version");
+	}
 	let arxiv_filename = data_folder.clone() + &String::from("arxiv.tex");
 
 	match create_dir_all(&output_folder) {
@@ -47,13 +62,12 @@ fn main() {
 
 	let verbose = matches.occurrences_of("verbose");
 
-	// 2. 
-	if verbose >= 1	{
-	    println!("Processing file {}:", filename);
-	}
+	//
+    trace!("Processing file {}:", filename);
 	
 	// 1. Wrap all files in one
 	//	 + Remove comments
+    trace!("1. Preprocessing");
 	delete_file_if_exist(&arxiv_filename);
 	let clean_file = match preprocessing::wrap_and_preprocess(&filename, &arxiv_filename, &data_folder) {
 		Ok(f) => f,
@@ -61,24 +75,18 @@ fn main() {
 	};
 
 	// 2. Parse latex
+    trace!("2. parsing Latex");
     let mut doc = match texparser::parse_tex(&clean_file, &filename, &data_folder) {
     	Ok(d) => d,
     	Err(e) => panic!("An errror had occured while parsing tex file\n{}", e),
     };
 
    	// 3. Parse aux
+    trace!("3. parsing aux");
     match auxparser::parse_aux(&filename, &aux_folder, &mut doc, &verbose) {
     	Ok(()) => (),
     	Err(e) => println!("an error occurs while parsing aux file\n{}", e),
     };
-
-    if verbose >= 2 {
-	    println!("{}", doc.print());
-	}
-
-	if verbose >= 1	{
-	    println!("Exporting tex structure");
-	}
 
 	// 3.2 delete arxiv file if necessary
 	if !save_to_arxiv {
@@ -86,6 +94,7 @@ fn main() {
 	}
 
 	// 4. Visualization
+    trace!("4. Visualization");
     visualize::visualize(&doc, &output_folder)
     	.expect("Something went wrong when exporting tex document");
 }
