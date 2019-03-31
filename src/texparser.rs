@@ -37,7 +37,6 @@ pub fn parse_tex(main_clean_file: &File, main_filename: &String, _folder: &Strin
 	// Removing \n
 	let re = Regex::new(r"\n").unwrap();
 	contents = re.replace_all(&contents, "").into_owned();
-	println!("{:?}", contents);
 
 		// Creating document
 	let mut tex_doc = Document::new(main_filename.to_string());
