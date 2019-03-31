@@ -9,7 +9,7 @@ mod visualize;
 extern crate clap;
 
 use clap::{App};
-use std::fs::{create_dir_all};
+use std::fs::{create_dir_all,remove_file};
 
 //use std::env;
 
@@ -35,6 +35,10 @@ fn main() {
 		Some(f) => format_dir_name(String::from(f)),
 		None 	=> String::from(""),
 	};
+
+	let save_to_arxiv = matches.is_present("arxiv");
+	let arxiv_filename = data_folder.clone() + &String::from("arxiv.tex");
+
 	match create_dir_all(&output_folder) {
 		Ok(_) => (),
 		Err(_) => panic!("A problem occurs with argument -o:\n{}\n
@@ -50,7 +54,8 @@ fn main() {
 	
 	// 1. Wrap all files in one
 	//	 + Remove comments
-	let clean_file = match preprocessing::wrap_and_preprocess(&filename, &data_folder) {
+	delete_file_if_exist(&arxiv_filename);
+	let clean_file = match preprocessing::wrap_and_preprocess(&filename, &arxiv_filename, &data_folder) {
 		Ok(f) => f,
 		Err(_e) => panic!("{:?}", _e),
 	};
@@ -75,6 +80,11 @@ fn main() {
 	    println!("Exporting tex structure");
 	}
 
+	// 3.2 delete arxiv file if necessary
+	if !save_to_arxiv {
+		delete_file_if_exist(&arxiv_filename);
+	}
+
 	// 4. Visualization
     visualize::visualize(&doc, &output_folder)
     	.expect("Something went wrong when exporting tex document");
@@ -87,4 +97,11 @@ fn format_dir_name(dir: String) -> String {
 	}
 
 	dir
+}
+
+fn delete_file_if_exist(filename: &String) {
+	match remove_file(&filename) {
+		Ok(()) => return,
+		Err(_e) => return,
+	};
 }
