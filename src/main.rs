@@ -1,4 +1,5 @@
-mod texparser;
+//mod texparser;
+mod texparser2;
 mod document;
 mod texstruct;
 mod preprocessing;
@@ -76,7 +77,8 @@ fn main() {
 
 	// 2. Parse latex
     trace!("2. parsing Latex");
-    let mut doc = match texparser::parse_tex(&clean_file, &filename, &data_folder) {
+    //let mut doc = match texparser::parse_tex(&clean_file, &filename, &data_folder) {
+   	let mut doc = match texparser2::texparser::parse_tex(&clean_file, &filename) {
     	Ok(d) => d,
     	Err(e) => panic!("An errror had occured while parsing tex file\n{}", e),
     };
