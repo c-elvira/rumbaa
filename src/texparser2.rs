@@ -89,28 +89,33 @@ pub mod texparser {
 		}
 	}
 
-	#[derive(Debug)]
+	#[derive(Debug, Clone)]
 	enum TexParserState {
 		Empty,
-		InMacroName,
+		//InMacroName,
 		InMacro,
 		InMacroOptionalArg,
 		InMacroArg,
+		InComment,
 	}
 
 	struct TexParser<'a> {
-		state: TexParserState,
 		env_parser: EnvParser<'a>,
-		bufcmd: String,
+		current_state: TexParserState,
+		stack_state: Vec<TexParserState>,
 		stack_macro: Vec<TexCmd>,
+		bufcmd: String,
+		bufComment: String,
 	}
 
 	impl<'a> TexParser<'a> {
 		fn new(doc_input: &'a mut Document) -> Self {
 	        TexParser {
-	            state: TexParserState::Empty,
+				current_state: TexParserState::Empty,
+	            stack_state: Vec::new(),
 	            env_parser: EnvParser::new(doc_input),
 	            bufcmd: String::from(""),
+	            bufComment: String::from(""),
 	            stack_macro: Vec::new(),
 	        }
 	    }
@@ -119,19 +124,32 @@ pub mod texparser {
 	     * @brief State macine main logic
 	     */
 	    fn add_char(&mut self, c: char) {
-	    	match self.state {
+	    	match self.current_state {
 
 	    		TexParserState::Empty => {
 
-	    			if c == '\\' {
-	    				let texmacro = TexCmd::new(&String::from(""));
-	    				self.stack_macro.push(texmacro);
+	    			match c {
 
-	    				self.state = TexParserState::InMacroName;
+	    				'\\' => {
+		    				let texmacro = TexCmd::new(&String::from(""));
+		    				self.stack_macro.push(texmacro);
+
+	    					self.stack_state.push(self.current_state.clone());
+	    					self.current_state = TexParserState::InMacro;
+	    				}
+
+	    				'%' => {
+	    					self.stack_state.push(self.current_state.clone());
+	    					self.current_state = TexParserState::InComment;
+	    				}
+
+	    				_ => {
+	    					// Do nothing
+	    				}
 			    	}
 	    		}
 
-	    		TexParserState::InMacroName => {
+	    		TexParserState::InMacro => {
 
 	    			if c.is_alphabetic() {
 	    				// still in macro name
@@ -147,54 +165,48 @@ pub mod texparser {
 	    				self.stack_macro.push(texmacro);    				
 	    			}
 					else if c == ' ' {
-						self.set_macro_name_from_buf();
+						if self.bufcmd != "" {
+							self.set_macro_name_from_buf();
+						}
     					let tex_macro = self.stack_macro.pop().unwrap();
 						self.env_parser.process_macro(tex_macro);
 
-	    				if self.stack_macro.len() == 0 {
-		    				self.state = TexParserState::Empty;
-		    			}
+	    				self.current_state = self.stack_state.pop().unwrap();
 					}
 
 					else if c == '[' {
-						self.set_macro_name_from_buf();
-						self.state = TexParserState::InMacroOptionalArg;
+						if self.bufcmd != "" {
+							self.set_macro_name_from_buf();
+						}
+
+						self.stack_state.push(self.current_state.clone());
+						self.current_state = TexParserState::InMacroOptionalArg;
 					}
 
 					else if c == '{' {
-						self.set_macro_name_from_buf();
-						self.state = TexParserState::InMacroArg;
+						if self.bufcmd != "" {
+							self.set_macro_name_from_buf();
+						}
+
+						self.stack_state.push(self.current_state.clone());
+						self.current_state = TexParserState::InMacroArg;
+					}
+
+					else if c == '%' {
+    					self.stack_state.push(self.current_state.clone());
+    					self.current_state = TexParserState::InComment;
 					}
 
 					else {
-						self.set_macro_name_from_buf();
+						if self.bufcmd != "" {
+							self.set_macro_name_from_buf();
+						}
+
     					let tex_macro = self.stack_macro.pop().unwrap();
 						self.env_parser.process_macro(tex_macro);
 
-	    				if self.stack_macro.len() == 0 {
-		    				self.state = TexParserState::Empty;
-		    			}
+	    				self.current_state = self.stack_state.pop().unwrap();
 					}
-	    		}
-
-	    		TexParserState::InMacro => {
-	    			match c {
-	    				'{' => {
-	    					self.state = TexParserState::InMacroArg;
-	    				}
-
-	    				'[' => {
-	    					self.state = TexParserState::InMacroOptionalArg;
-	    				}
-
-	    				_ => {
-	    					let tex_macro = self.stack_macro.pop().unwrap();
-	    					self.env_parser.process_macro(tex_macro);
-	    					if self.stack_macro.len() == 0 {
-		    					self.state = TexParserState::Empty;
-		    				}
-	    				}
-	    			}
 	    		}
 
 	    		TexParserState::InMacroOptionalArg => {
@@ -205,7 +217,12 @@ pub mod texparser {
 							self.stack_macro.push(tex_macro);
 
 							self.bufcmd = String::from("");
-							self.state = TexParserState::InMacro;
+							self.current_state = self.stack_state.pop().unwrap();
+	    				}
+
+	    				'%' => {
+	    					self.stack_state.push(self.current_state.clone());
+    						self.current_state = TexParserState::InComment;
 	    				}
 
 	    				_ => {
@@ -222,13 +239,34 @@ pub mod texparser {
 							self.stack_macro.push(tex_macro);
 
 							self.bufcmd = String::from("");
-							self.state = TexParserState::InMacro;
+							self.current_state = self.stack_state.pop().unwrap();
+	    				}
+
+	    				'%' => {
+	    					self.stack_state.push(self.current_state.clone());
+    						self.current_state = TexParserState::InComment;
 	    				}
 
 	    				_ => {
 	    					self.bufcmd.push(c);
 	    				}
 	    			}
+				}
+
+				TexParserState::InComment => {
+					match c {
+						'\n' => {
+							// End of comment, process it
+							self.env_parser.check_latexmk_macro(&self.bufComment);
+
+							self.bufComment = "".to_string();
+							self.current_state = self.stack_state.pop().unwrap();
+						}
+
+						_ => {
+							self.bufComment.push(c);
+						}
+					}
 				}
 	    	}
 	    }
@@ -242,6 +280,7 @@ pub mod texparser {
 	    }
 	}
 
+	#[derive(Clone)]
 	enum EnvEnumState {
 		None,
 		Theorem, // definition, theorem, custom
@@ -252,7 +291,9 @@ pub mod texparser {
 
 
 	struct EnvParser<'a> {
+		current_env: EnvEnumState,
 		stack_env: Vec<EnvEnumState>,
+		stack_env_filtered: Vec<EnvEnumState>,
 		stack_theorem: Vec<TexStructure>,
 		stack_proof: Vec<Proof>,
 		tex_struct_collection: HashMap<String, EnumTexType>,
@@ -264,7 +305,9 @@ pub mod texparser {
 	impl<'a> EnvParser<'a> {
 		fn new(doc_input: &'a mut Document) -> Self {
 	        EnvParser {
-	            stack_env: vec![EnvEnumState::None],
+	        	current_env: EnvEnumState::None,
+	            stack_env: Vec::new(),
+	            stack_env_filtered: Vec::new(),
 	            stack_theorem: Vec::new(),
 	            stack_proof: Vec::new(),
 		        doc: doc_input,
@@ -287,6 +330,8 @@ pub mod texparser {
 
 
 		fn process_macro(&mut self, tex_macro: TexCmd) {
+			//info!("Process cmd: {} - {:?}", tex_macro.name, tex_macro.args);
+
 			match tex_macro.name.as_ref() {
 				"newtheorem" => {
 					let keyword = tex_macro.args[0].clone();
@@ -313,8 +358,27 @@ pub mod texparser {
 				}
 
 				_ => {
-					// Command not supported
-					// do nothing
+					if tex_macro.name.contains("ref") {
+					// Add reference to proof container if it exists
+					if self.stack_env_filtered.len() > 0 {
+						let tex_env = self.stack_env_filtered.pop().unwrap();
+						match tex_env {
+							EnvEnumState::Proof => {
+								let label = tex_macro.args[0].clone();
+								let mut proof = self.stack_proof.pop().unwrap();
+								//info!("add {} to {}", label, math_struct.clone_label());
+								proof.add_link(label);
+								self.stack_proof.push(proof);
+							}
+
+							_ => {
+								// Do noting
+								println!("pas de chance");
+							}
+						}
+						self.stack_env_filtered.push(tex_env);
+					}
+					}
 				}
 			}
 		}
@@ -326,30 +390,34 @@ pub mod texparser {
 				let math_struct = TexStructure::new(String::from("NOLABEL"), tex_type);
 
 				self.stack_theorem.push(math_struct);
-				self.stack_env.push(EnvEnumState::Theorem);
+				self.stack_env.push(self.current_env.clone());
+				self.current_env = EnvEnumState::Theorem;
+				self.stack_env_filtered.push(self.current_env.clone());
 			}
 
 			else if self.equation_env_collection.contains(&env_name) {
-				self.stack_env.push(EnvEnumState::Equation);
+				self.stack_env.push(self.current_env.clone());
+				self.current_env = EnvEnumState::Equation;
 			}
 
 			else if env_name == "proof" {
 				let proof = Proof::new("NOTH".to_string());
 				self.stack_proof.push(proof);
 
-				self.stack_env.push(EnvEnumState::Proof);
+				self.stack_env.push(self.current_env.clone());
+				self.current_env = EnvEnumState::Proof;
+				self.stack_env_filtered.push(self.current_env.clone());
 			}
 
 			else {
 				// We don't care
-				self.stack_env.push(EnvEnumState::Other);
+				self.stack_env.push(self.current_env.clone());
+				self.current_env = EnvEnumState::Other;
 			}
 		}
 
 		fn add_label_to_env(&mut self, label: String) {
-			let tex_env = self.stack_env.pop().unwrap();
-
-			match tex_env {
+			match self.current_env {
 				EnvEnumState::Theorem => {
 					// Add label to theorem
 					let mut math_struct = self.stack_theorem.pop().unwrap();
@@ -362,7 +430,24 @@ pub mod texparser {
 				}
 
 				EnvEnumState::Equation => {
-					// Add label to Env
+					// Add label to Theorem container if it exists
+					if self.stack_env_filtered.len() > 0 {
+						let tex_env = self.stack_env_filtered.pop().unwrap();
+						match tex_env {
+							EnvEnumState::Theorem => {
+								let mut math_struct = self.stack_theorem.pop().unwrap();
+								//info!("add {} to {}", label, math_struct.clone_label());
+								math_struct.add_equation(label);
+								self.stack_theorem.push(math_struct);
+							}
+
+							_ => {
+								// Do noting
+								println!("pas de chance");
+							}
+						}
+						self.stack_env_filtered.push(tex_env);
+					}
 				}
 
 				EnvEnumState::Other => {
@@ -373,20 +458,17 @@ pub mod texparser {
 					// Do nothing
 				}
 			}
-
-			self.stack_env.push(tex_env);
 		}
 
 		fn close_env(&mut self) {
-			let tex_env = self.stack_env.pop().unwrap();
-
-			match tex_env {
+			match self.current_env {
 				EnvEnumState::Theorem => {
 					let math_struct = self.stack_theorem.pop().unwrap();
 					let label = math_struct.clone_label();
 					if label != "NOLABEL" {
 						self.doc.push(label, math_struct);
 					}
+					self.stack_env_filtered.pop().unwrap();
 				}
 
 				EnvEnumState::Proof => {
@@ -396,6 +478,7 @@ pub mod texparser {
 					if label != "NOTH" {
 						self.doc.set_proof(&label, proof);
 					}
+					self.stack_env_filtered.pop().unwrap();
 				}
 
 				EnvEnumState::Equation => {
@@ -409,6 +492,47 @@ pub mod texparser {
 				EnvEnumState::None => {
 					// Error
 					println!("This should not happen...");
+				}
+			}
+
+			self.current_env = self.stack_env.pop().unwrap();
+		}
+
+		fn check_latexmk_macro(&mut self, line: &String) {
+			match self.current_env {
+				EnvEnumState::Proof => {
+
+					// Not robust
+					let vec = line.split(" ").collect::<Vec<&str>>();
+
+					if vec.len() != 4 {
+						return
+					}
+
+					else if vec[0] != "!TEX" {
+						return
+					}
+
+					else if vec[1] != "proof" {
+						return
+					}
+
+					else if vec[2] != "=" {
+						return
+					}
+
+					let mut label = String::from(vec[3]);
+					label = label.replace("{", "");
+					label = label.replace("}", "");
+					//info!("Tex parser has found proof of {}", label);
+
+					let mut proof = self.stack_proof.pop().unwrap();
+					proof.set_struct_label(&label);
+					self.stack_proof.push(proof);
+				}
+
+				_ => {
+					// Do nothing
 				}
 			}
 		}
