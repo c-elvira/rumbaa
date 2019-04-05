@@ -1,7 +1,6 @@
 extern crate log;
 
-use std::collections::HashMap;
-use std::io::prelude::*;
+
 
 
 
@@ -19,6 +18,9 @@ pub mod texparser {
 	use std::fs::File;
 	use std::io::{BufRead,BufReader};
 
+	use std::collections::HashMap;
+	use std::io::prelude::*;
+
 	use crate::texstruct::{TexStructure,EnumTexType,clone_tex_type,Proof};
 	use crate::document::{Document};
 
@@ -31,10 +33,10 @@ pub mod texparser {
 	 */
 	pub fn parse_tex(main_clean_file: &File, main_filename: &String) -> std::io::Result<(Document)> {
 			// Creating document
-		//let tex_doc = Document::new(main_filename.to_string());
+		let mut tex_doc = Document::new(main_filename.to_string());
 
 			// Creating tex parser
-	    let mut parser = TexParser::new(&main_filename);
+	    let mut parser = TexParser::new(&mut tex_doc);
 
 		// 1. Reading
 	    let mut reader = BufReader::new(main_clean_file);
@@ -55,7 +57,36 @@ pub mod texparser {
 	        buf.clear();
 	    }
 
-		Ok(parser.get_doc())
+		Ok(tex_doc)
+	}
+
+	#[derive(Debug)]
+	struct TexCmd {
+		name: String,
+		args: Vec<String>,
+		option_args: Vec<String>,
+	}
+
+	impl TexCmd {
+		pub fn new (cmd_name: &String) -> Self {
+			Self {
+				name: cmd_name.clone(),
+				args: Vec::new(),
+				option_args: Vec::new(),
+			}
+		}
+
+		fn set_name(&mut self, cmd_name: &String) {
+			self.name = cmd_name.clone();
+		}
+
+		fn add_arg(&mut self, arg: &String) {
+			self.args.push(arg.clone());
+		}
+
+		fn add_opt_arg(&mut self, opt_arg: &String) {
+			self.option_args.push(opt_arg.clone());
+		}
 	}
 
 	#[derive(Debug)]
@@ -67,37 +98,25 @@ pub mod texparser {
 		InMacroArg,
 	}
 
-	struct TexParser {
+	struct TexParser<'a> {
 		state: TexParserState,
-		doc: Document,
+		env_parser: EnvParser<'a>,
 		bufcmd: String,
 		stack_macro: Vec<TexCmd>,
-		stack_env: Vec<TexCmd>,
 	}
 
-	impl TexParser {
-		fn new(filename: &String) -> Self {
+	impl<'a> TexParser<'a> {
+		fn new(doc_input: &'a mut Document) -> Self {
 	        TexParser {
 	            state: TexParserState::Empty,
-	            doc: Document::new(filename.to_string()),
+	            env_parser: EnvParser::new(doc_input),
 	            bufcmd: String::from(""),
 	            stack_macro: Vec::new(),
-	            stack_env: Vec::new(),
 	        }
-	    }
-
-	    fn get_doc(self) -> Document {
-	    	return self.doc
 	    }
 
 	    /**
 	     * @brief State macine main logic
-	     * @details [long description]
-	     * 
-	     * @param self [description]
-	     * @param r [description]
-	     * 
-	     * @return [description]
 	     */
 	    fn add_char(&mut self, c: char) {
 	    	match self.state {
@@ -121,14 +140,16 @@ pub mod texparser {
 	    			else if c == '\\' {
 	    				// Start another macro
 	    				self.set_macro_name_from_buf();
-	    				self.process_macro();
+    					let tex_macro = self.stack_macro.pop().unwrap();
+						self.env_parser.process_macro(tex_macro);
 
 	    				let texmacro = TexCmd::new(&String::from(""));
 	    				self.stack_macro.push(texmacro);    				
 	    			}
 					else if c == ' ' {
 						self.set_macro_name_from_buf();
-	    				self.process_macro();
+    					let tex_macro = self.stack_macro.pop().unwrap();
+						self.env_parser.process_macro(tex_macro);
 
 	    				if self.stack_macro.len() == 0 {
 		    				self.state = TexParserState::Empty;
@@ -147,7 +168,8 @@ pub mod texparser {
 
 					else {
 						self.set_macro_name_from_buf();
-						self.process_macro();
+    					let tex_macro = self.stack_macro.pop().unwrap();
+						self.env_parser.process_macro(tex_macro);
 
 	    				if self.stack_macro.len() == 0 {
 		    				self.state = TexParserState::Empty;
@@ -166,7 +188,8 @@ pub mod texparser {
 	    				}
 
 	    				_ => {
-	    					self.process_macro();
+	    					let tex_macro = self.stack_macro.pop().unwrap();
+	    					self.env_parser.process_macro(tex_macro);
 	    					if self.stack_macro.len() == 0 {
 		    					self.state = TexParserState::Empty;
 		    				}
@@ -217,41 +240,177 @@ pub mod texparser {
 
 			self.stack_macro.push(tex_macro);
 	    }
-
-		fn process_macro(&mut self) {
-			let tex_macro = self.stack_macro.pop().unwrap();
-
-			println!("name: {}, args: {:?}, opt: {:?}", 
-				tex_macro.name, tex_macro.args, tex_macro.option_args);
-		}
 	}
 
-	#[derive(Debug)]
-	struct TexCmd {
-		name: String,
-		args: Vec<String>,
-		option_args: Vec<String>,
+	enum EnvEnumState {
+		None,
+		Theorem, // definition, theorem, custom
+		Proof,
+		Equation,
+		Other,
 	}
 
-	impl TexCmd {
-		pub fn new (cmd_name: &String) -> Self {
-			Self {
-				name: cmd_name.clone(),
-				args: Vec::new(),
-				option_args: Vec::new(),
+
+	struct EnvParser<'a> {
+		stack_env: Vec<EnvEnumState>,
+		stack_theorem: Vec<TexStructure>,
+		stack_proof: Vec<Proof>,
+		tex_struct_collection: HashMap<String, EnumTexType>,
+		equation_env_collection: Vec<String>,
+
+		doc: &'a mut Document,
+	}
+
+	impl<'a> EnvParser<'a> {
+		fn new(doc_input: &'a mut Document) -> Self {
+	        EnvParser {
+	            stack_env: vec![EnvEnumState::None],
+	            stack_theorem: Vec::new(),
+	            stack_proof: Vec::new(),
+		        doc: doc_input,
+	    
+	            tex_struct_collection: hashmap![
+    				"definition".to_string()  => EnumTexType::Definition,
+    				"theorem".to_string() 	  => EnumTexType::Theorem,
+    				"proposition".to_string() => EnumTexType::Proposition,
+    				"lemma".to_string()		  => EnumTexType::Lemma,
+    				"corollary".to_string()   => EnumTexType::Corollary
+				],
+
+				equation_env_collection: vec![
+					"equation".to_string(),
+					"align".to_string(),
+					"multlines".to_string(),
+				]
+	        }
+	    }
+
+
+		fn process_macro(&mut self, tex_macro: TexCmd) {
+			match tex_macro.name.as_ref() {
+				"newtheorem" => {
+					let keyword = tex_macro.args[0].clone();
+
+					if !self.tex_struct_collection.contains_key(&keyword) {
+						self.tex_struct_collection.insert(keyword, EnumTexType::Custom);
+					}
+				}
+
+				"begin" => {
+					// process environment
+					let env_name = tex_macro.args[0].clone();
+					self.open_env(&env_name);
+				}
+
+				"end" => {
+					// close environment
+					self.close_env();
+				}
+
+				"label" => {
+					let label = tex_macro.args[0].clone();
+					self.add_label_to_env(label);
+				}
+
+				_ => {
+					// Command not supported
+					// do nothing
+				}
 			}
 		}
 
-		fn set_name(&mut self, cmd_name: &String) {
-			self.name = cmd_name.clone();
+		fn open_env(&mut self, env_name: &String) {
+			// 1. if is theorem, definition etc...
+			if self.tex_struct_collection.contains_key(env_name) {
+				let tex_type = clone_tex_type(self.tex_struct_collection.get(env_name).unwrap());
+				let math_struct = TexStructure::new(String::from("NOLABEL"), tex_type);
+
+				self.stack_theorem.push(math_struct);
+				self.stack_env.push(EnvEnumState::Theorem);
+			}
+
+			else if self.equation_env_collection.contains(&env_name) {
+				self.stack_env.push(EnvEnumState::Equation);
+			}
+
+			else if env_name == "proof" {
+				let proof = Proof::new("NOTH".to_string());
+				self.stack_proof.push(proof);
+
+				self.stack_env.push(EnvEnumState::Proof);
+			}
+
+			else {
+				// We don't care
+				self.stack_env.push(EnvEnumState::Other);
+			}
 		}
 
-		fn add_arg(&mut self, arg: &String) {
-			self.args.push(arg.clone());
+		fn add_label_to_env(&mut self, label: String) {
+			let tex_env = self.stack_env.pop().unwrap();
+
+			match tex_env {
+				EnvEnumState::Theorem => {
+					// Add label to theorem
+					let mut math_struct = self.stack_theorem.pop().unwrap();
+					math_struct.set_label(&label);
+					self.stack_theorem.push(math_struct);
+				}
+
+				EnvEnumState::Proof => {
+					// Do nothing
+				}
+
+				EnvEnumState::Equation => {
+					// Add label to Env
+				}
+
+				EnvEnumState::Other => {
+					// Do nothing
+				}
+
+				EnvEnumState::None => {
+					// Do nothing
+				}
+			}
+
+			self.stack_env.push(tex_env);
 		}
 
-		fn add_opt_arg(&mut self, opt_arg: &String) {
-			self.option_args.push(opt_arg.clone());
+		fn close_env(&mut self) {
+			let tex_env = self.stack_env.pop().unwrap();
+
+			match tex_env {
+				EnvEnumState::Theorem => {
+					let math_struct = self.stack_theorem.pop().unwrap();
+					let label = math_struct.clone_label();
+					if label != "NOLABEL" {
+						self.doc.push(label, math_struct);
+					}
+				}
+
+				EnvEnumState::Proof => {
+					let proof = self.stack_proof.pop().unwrap();
+					let label = proof.get_struct_label();
+
+					if label != "NOTH" {
+						self.doc.set_proof(&label, proof);
+					}
+				}
+
+				EnvEnumState::Equation => {
+					// Nothing to do also
+				}
+
+				EnvEnumState::Other => {
+					// Do nothing
+				}
+
+				EnvEnumState::None => {
+					// Error
+					println!("This should not happen...");
+				}
+			}
 		}
 	}
 }

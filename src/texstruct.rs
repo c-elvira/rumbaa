@@ -71,6 +71,10 @@ impl TexStructure {
 		output
 	}
 
+	pub fn set_label(&mut self, new_label: &String) {
+		self.label = new_label.clone();
+	}
+
 	pub fn set_proof(&mut self, proof: Proof) {
 		self.proof = Some(proof);
 	}
@@ -112,18 +116,22 @@ impl TexStructure {
 
 		out
 	}
+
+	pub fn clone_label(&self) -> String {
+		return self.label.clone()
+	}
 }
 
 
 pub struct Proof {
-	_structlabel: String,
+	struct_label: String,
 	links: Vec<String>,
 }
 
 impl Proof {
-	pub fn new (structlabel: String) -> Self {
+	pub fn new (label: String) -> Self {
 		Self {
-			_structlabel: structlabel,
+			struct_label: label,
 			links: Vec::new(),
 		}
 	}
@@ -138,5 +146,13 @@ impl Proof {
 
 	pub fn get_link(&self, i: usize) -> &String {
 		&self.links[i]
+	}
+
+	pub fn get_struct_label(&self) -> String {
+		self.struct_label.clone()
+	}
+
+	pub fn set_struct_label(&mut self, label: &String) {
+		self.struct_label = label.clone();
 	}
 }
