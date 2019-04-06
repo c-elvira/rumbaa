@@ -19,7 +19,7 @@ mod tests {
         	.open(data_folder.clone() + &filename)
         	.unwrap();
 
-		let _doc = rumbaa::texparser::parse_tex(&main_file, &filename, &data_folder).unwrap();
+		let _doc = rumbaa::texparser2::texparser::parse_tex(&main_file, &filename).unwrap();
 	}
 
 	#[test]
@@ -29,7 +29,7 @@ mod tests {
 		let tmp_file_name = String::from("tmp_eq_in_def.tex");
 
 		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
-		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
+		let doc = rumbaa::texparser2::texparser::parse_tex(&clean_file, &filename).unwrap();
 
 		// 1. test
 		let label = String::from("th");
@@ -52,7 +52,7 @@ mod tests {
 		let tmp_file_name = String::from("tmp_remove_comments.tex");
 
 		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
-		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
+		let doc = rumbaa::texparser2::texparser::parse_tex(&clean_file, &filename).unwrap();
 
 		// 2. Delete file
 		match remove_file(tmp_file_name) {
@@ -78,7 +78,7 @@ mod tests {
 		let tmp_file_name = data_folder.to_owned() + &String::from("tmp_input_in_comment.tex");
 
 		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
-		let doc = rumbaa::texparser::parse_tex(&clean_file, &filename, &data_folder).unwrap();
+		let doc = rumbaa::texparser2::texparser::parse_tex(&clean_file, &filename).unwrap();
 
 		// 2. Delete file
 		match remove_file(tmp_file_name) {

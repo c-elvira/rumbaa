@@ -19,7 +19,7 @@ pub mod texparser {
 	use std::io::{BufRead,BufReader};
 
 	use std::collections::HashMap;
-	use std::io::prelude::*;
+	//use std::io::prelude::*;
 
 	use crate::texstruct::{TexStructure,EnumTexType,clone_tex_type,Proof};
 	use crate::document::{Document};
@@ -105,7 +105,7 @@ pub mod texparser {
 		stack_state: Vec<TexParserState>,
 		stack_macro: Vec<TexCmd>,
 		bufcmd: String,
-		bufComment: String,
+		buf_comment: String,
 	}
 
 	impl<'a> TexParser<'a> {
@@ -115,7 +115,7 @@ pub mod texparser {
 	            stack_state: Vec::new(),
 	            env_parser: EnvParser::new(doc_input),
 	            bufcmd: String::from(""),
-	            bufComment: String::from(""),
+	            buf_comment: String::from(""),
 	            stack_macro: Vec::new(),
 	        }
 	    }
@@ -257,14 +257,14 @@ pub mod texparser {
 					match c {
 						'\n' => {
 							// End of comment, process it
-							self.env_parser.check_latexmk_macro(&self.bufComment);
+							self.env_parser.check_latexmk_macro(&self.buf_comment);
 
-							self.bufComment = "".to_string();
+							self.buf_comment = "".to_string();
 							self.current_state = self.stack_state.pop().unwrap();
 						}
 
 						_ => {
-							self.bufComment.push(c);
+							self.buf_comment.push(c);
 						}
 					}
 				}
@@ -299,6 +299,7 @@ pub mod texparser {
 		tex_struct_collection: HashMap<String, EnumTexType>,
 		equation_env_collection: Vec<String>,
 
+		no_label_count: i32,
 		doc: &'a mut Document,
 	}
 
@@ -310,6 +311,8 @@ pub mod texparser {
 	            stack_env_filtered: Vec::new(),
 	            stack_theorem: Vec::new(),
 	            stack_proof: Vec::new(),
+
+	            no_label_count: 0,
 		        doc: doc_input,
 	    
 	            tex_struct_collection: hashmap![
@@ -330,7 +333,7 @@ pub mod texparser {
 
 
 		fn process_macro(&mut self, tex_macro: TexCmd) {
-			//info!("Process cmd: {} - {:?}", tex_macro.name, tex_macro.args);
+			info!("Process cmd: {} - {:?}", tex_macro.name, tex_macro.args);
 
 			match tex_macro.name.as_ref() {
 				"newtheorem" => {
@@ -373,7 +376,7 @@ pub mod texparser {
 
 							_ => {
 								// Do noting
-								println!("pas de chance");
+								//println!("pas de chance");
 							}
 						}
 						self.stack_env_filtered.push(tex_env);
@@ -436,7 +439,7 @@ pub mod texparser {
 						match tex_env {
 							EnvEnumState::Theorem => {
 								let mut math_struct = self.stack_theorem.pop().unwrap();
-								//info!("add {} to {}", label, math_struct.clone_label());
+								info!("add {} to {}", label, math_struct.clone_label());
 								math_struct.add_equation(label);
 								self.stack_theorem.push(math_struct);
 							}
@@ -463,11 +466,14 @@ pub mod texparser {
 		fn close_env(&mut self) {
 			match self.current_env {
 				EnvEnumState::Theorem => {
-					let math_struct = self.stack_theorem.pop().unwrap();
-					let label = math_struct.clone_label();
-					if label != "NOLABEL" {
-						self.doc.push(label, math_struct);
+					let mut math_struct = self.stack_theorem.pop().unwrap();
+					let mut label = math_struct.clone_label();
+					if label == "NOLABEL" {
+						self.no_label_count += 1;
+						label = format!("{}-{}", label, self.no_label_count);
+						math_struct.set_label(&label);
 					}
+					self.doc.push(label, math_struct);
 					self.stack_env_filtered.pop().unwrap();
 				}
 
@@ -524,7 +530,7 @@ pub mod texparser {
 					let mut label = String::from(vec[3]);
 					label = label.replace("{", "");
 					label = label.replace("}", "");
-					//info!("Tex parser has found proof of {}", label);
+					info!("Tex parser has found proof of {}", label);
 
 					let mut proof = self.stack_proof.pop().unwrap();
 					proof.set_struct_label(&label);
