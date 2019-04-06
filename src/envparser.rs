@@ -72,11 +72,11 @@ pub mod texparser {
 
 				EnumMacroType::Tex => {
 
-					info!("Process Tex Macro: {} - {:?}", tex_macro.name, tex_macro.args);
+					info!("Process Tex Macro: {} - {:?}", tex_macro.get_name(), tex_macro.get_args());
 
-					match tex_macro.name.as_ref() {
+					match tex_macro.get_name().as_ref() {
 						"newtheorem" => {
-							let keyword = tex_macro.args[0].clone();
+							let keyword = tex_macro.get_arg(0);
 
 							if !self.tex_struct_collection.contains_key(&keyword) {
 								self.tex_struct_collection.insert(keyword, EnumTheoremType::Custom);
@@ -85,7 +85,7 @@ pub mod texparser {
 
 						"begin" => {
 							// process environment
-							let env_name = tex_macro.args[0].clone();
+							let env_name = tex_macro.get_arg(0);
 							self.open_env(&env_name);
 						}
 
@@ -95,18 +95,18 @@ pub mod texparser {
 						}
 
 						"label" => {
-							let label = tex_macro.args[0].clone();
+							let label = tex_macro.get_arg(0);
 							self.add_label_to_env(label);
 						}
 
 						_ => {
-							if tex_macro.name.contains("ref") {
+							if tex_macro.get_name().contains("ref") {
 								// Add reference to proof container if it exists
 								if self.stack_env_filtered.len() > 0 {
 									let tex_env = self.stack_env_filtered.pop().unwrap();
 									match tex_env {
 										EnvEnumState::Proof => {
-											let label = tex_macro.args[0].clone();
+											let label = tex_macro.get_arg(0);
 											let mut proof = self.stack_proof.pop().unwrap();
 											//info!("add {} to {}", label, math_struct.clone_label());
 											proof.add_link(label);
@@ -126,13 +126,13 @@ pub mod texparser {
 				}
 
 				EnumMacroType::LatexMk => {
-					info!("Process LatexMk Macro: {} - {:?}", tex_macro.name, tex_macro.args);
+					info!("Process LatexMk Macro: {} - {:?}", tex_macro.get_name(), tex_macro.get_args());
 
-					match tex_macro.name.as_ref() {
+					match tex_macro.get_name().as_ref() {
 
 						"proof" => {
 							if self.current_env == EnvEnumState::Proof {
-								let label = &tex_macro.args[0];
+								let label = &tex_macro.get_arg(0);
 
 								info!("Tex parser has found proof of {}", label);
 								let mut proof = self.stack_proof.pop().unwrap();

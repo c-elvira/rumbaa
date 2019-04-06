@@ -16,10 +16,10 @@ pub mod tex_logic {
 
 	#[derive(Debug)]
 	pub struct TexMacro {
-		pub name: String,
-		pub macro_type: EnumMacroType,
-		pub args: Vec<String>,
-		pub option_args: Vec<String>,
+		name: String,
+		macro_type: EnumMacroType,
+		args: Vec<String>,
+		option_args: Vec<String>,
 	}
 
 	impl TexMacro {
@@ -34,6 +34,30 @@ pub mod tex_logic {
 
 		pub fn get_macro_type(&self) -> EnumMacroType {
 			self.macro_type.clone()
+		}
+
+		pub fn get_name(&self) -> String {
+			self.name.clone()
+		}
+
+		pub fn get_nb_args(&self) -> usize {
+			self.args.len()
+		}
+
+		pub fn get_nb_opt_args(&self) -> usize {
+			self.option_args.len()
+		}
+
+		pub fn get_args(&self) -> Vec<String> {
+			self.args.clone()
+		}
+
+		pub fn get_arg(&self, i: usize) -> String {
+			self.args[i].clone()
+		}
+
+		pub fn get_opt_arg(&self, i: usize) -> String {
+			self.option_args[i].clone()
 		}
 
 		pub fn set_name(&mut self, cmd_name: &String) {
