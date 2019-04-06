@@ -1,5 +1,6 @@
 //mod texparser;
 mod texparser2;
+mod envparser;
 mod document;
 mod texstruct;
 mod preprocessing;
