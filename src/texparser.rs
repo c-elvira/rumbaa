@@ -371,7 +371,6 @@ pub mod texparser {
 
 			// 1. Assert that nothing is returned
 			for c in tex_line_part1.chars() {
-				println!("{:?}", c);
 				assert!(parser.add_char(c).is_none())
 			}
 
