@@ -281,7 +281,10 @@ pub mod texparser {
 
 		fn set_macro_name_from_buf(&mut self) {
 			let mut tex_macro = self.stack_macro.pop().unwrap();
-			tex_macro.set_name(&self.bufcmd);
+			let clean_name = self.bufcmd.replace(" ", "");
+			let clean_name = clean_name.replace("\t", "");
+			let clean_name = clean_name.replace("\n", "");
+			tex_macro.set_name(&clean_name);
 			self.bufcmd = String::from("");
 
 			self.stack_macro.push(tex_macro);
@@ -397,5 +400,10 @@ pub mod texparser {
 			assert!(macro_out_2.get_arg(0) == String::from("\\macroTwo{arg}"));
 		}
 	}
+
+		#[test]
+		fn clean_macro_name() {
+			//todo: remove white space in nested macro name
+		}
 }
 
