@@ -323,6 +323,40 @@ pub mod texparser {
 			assert!(macro_out.get_opt_arg(0) == String::from("opt"));
 		}
 
+		#[test]
+		fn nested_macros() {
+			let tex_line_part1 = String::from("\\macro1{\\macro2{arg}");
+			let tex_line_part2 = '}';
+			let tex_line_part3 = '\n';
+			let mut parser = TexParser::new();
+
+			// 1. Assert that nothing is returned
+			for c in tex_line_part1.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			// 2. End of first macro
+			let opt_macro_out_1 = parser.add_char(tex_line_part2);
+
+				// 2.1
+			assert!(!opt_macro_out_1.is_none());
+
+				// 2.2. Check argument
+			let macro_out_1 = opt_macro_out_1.unwrap();
+			assert!(macro_out_1.get_nb_args() == 1);
+			assert!(macro_out_1.get_arg(0) == String::from("arg"));
+
+			// 3. End of second macro
+			let opt_macro_out_2 = parser.add_char(tex_line_part3);
+
+				// 2.1
+			assert!(!opt_macro_out_2.is_none());
+
+				// 2.2. Check argument
+			let macro_out_2 = opt_macro_out_2.unwrap();
+			assert!(macro_out_2.get_nb_args() == 1);
+			assert!(macro_out_2.get_arg(0) == String::from("\\macro2{arg}"));
+		}
 	}
 }
 
