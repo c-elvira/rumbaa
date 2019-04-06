@@ -17,7 +17,7 @@ mod tests_arxiv {
 		let tmp_file_name = String::from("tmp_1.tex");
 
 		let clean_file = rumbaa::preprocessing::wrap_and_preprocess(&filename, &tmp_file_name, &data_folder).unwrap();
-		let doc = rumbaa::texparser2::texparser::parse_tex(&clean_file, &filename).unwrap();
+		let doc = rumbaa::texparser::texparser::parse_tex(&clean_file, &filename).unwrap();
 	    rumbaa::visualize::visualize(&doc, &data_folder)
     		.expect("Something went wrong when exporting tex document");
 

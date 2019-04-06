@@ -297,7 +297,7 @@ pub mod texparser {
 	#[cfg(test)]
 	mod tests {
 
-		use crate::texparser2::texparser::{TexParser};
+		use crate::texparser::texparser::{TexParser};
 
 		#[test]
 		fn one_simple_macro() {

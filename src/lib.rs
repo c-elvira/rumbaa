@@ -2,7 +2,7 @@
 
 pub mod document;
 pub mod texstruct;
-pub mod texparser2;
+pub mod texparser;
 pub mod envparser;
 pub mod visualize;
 pub mod preprocessing;
