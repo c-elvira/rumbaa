@@ -100,11 +100,7 @@ pub mod texparser {
 					match c {
 
 						'\\' => {
-							let texmacro = TexMacro::new(EnumMacroType::Tex);
-							self.stack_macro.push(texmacro);
-
-							self.stack_state.push(self.current_state.clone());
-							self.current_state = TexParserState::InMacro;
+							self.start_new_macro();
 						}
 
 						'%' => {
@@ -163,6 +159,31 @@ pub mod texparser {
 						self.current_state = TexParserState::InComment;
 					}
 
+					else if c == '}' || c == ']' {
+						// In this case, we are inside nested macro
+						// close the inner macro, tell the outer arg ends
+						if self.bufcmd != "" {
+							self.set_macro_name_from_buf();
+						}
+						let ended_macro = self.stack_macro.pop().unwrap();
+
+						self.bufcmd = ended_macro.get_tex_code();
+
+						macro_out = Some(ended_macro);
+						self.current_state = self.stack_state.pop().unwrap();
+
+						match self.add_char(c) {
+							None => {
+								// Ok
+							}
+
+							Some(_) => {
+								// This should not happen
+								println!("this should not happen");
+							}
+						}
+					}
+
 					else {
 						if self.bufcmd != "" {
 							self.set_macro_name_from_buf();
@@ -185,6 +206,11 @@ pub mod texparser {
 							self.current_state = self.stack_state.pop().unwrap();
 						}
 
+						'\\' => {
+							// Start new macro
+							self.start_new_macro();
+						}
+
 						'%' => {
 							self.stack_state.push(self.current_state.clone());
 							self.current_state = TexParserState::InComment;
@@ -205,6 +231,11 @@ pub mod texparser {
 
 							self.bufcmd = String::from("");
 							self.current_state = self.stack_state.pop().unwrap();
+						}
+
+						'\\' => {
+							// Start new macro
+							self.start_new_macro();
 						}
 
 						'%' => {
@@ -238,6 +269,14 @@ pub mod texparser {
 			}
 
 			macro_out
+		}
+
+		fn start_new_macro(&mut self) {
+			let texmacro = TexMacro::new(EnumMacroType::Tex);
+			self.stack_macro.push(texmacro);
+
+			self.stack_state.push(self.current_state.clone());
+			self.current_state = TexParserState::InMacro;
 		}
 
 		fn set_macro_name_from_buf(&mut self) {
@@ -325,13 +364,14 @@ pub mod texparser {
 
 		#[test]
 		fn nested_macros() {
-			let tex_line_part1 = String::from("\\macro1{\\macro2{arg}");
+			let tex_line_part1 = String::from("\\macroOne{\\macroTwo{arg}");
 			let tex_line_part2 = '}';
 			let tex_line_part3 = '\n';
 			let mut parser = TexParser::new();
 
 			// 1. Assert that nothing is returned
 			for c in tex_line_part1.chars() {
+				println!("{:?}", c);
 				assert!(parser.add_char(c).is_none())
 			}
 
@@ -355,7 +395,7 @@ pub mod texparser {
 				// 2.2. Check argument
 			let macro_out_2 = opt_macro_out_2.unwrap();
 			assert!(macro_out_2.get_nb_args() == 1);
-			assert!(macro_out_2.get_arg(0) == String::from("\\macro2{arg}"));
+			assert!(macro_out_2.get_arg(0) == String::from("\\macroTwo{arg}"));
 		}
 	}
 }

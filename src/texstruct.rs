@@ -60,6 +60,20 @@ pub mod tex_logic {
 			self.option_args[i].clone()
 		}
 
+		pub fn get_tex_code(&self) -> String {
+			let mut out = String::from("\\".to_owned() + &self.name);
+
+			for arg in &self.option_args {
+				out += &format!("[{}]", arg);
+			}
+
+			for arg in &self.args {
+				out += &format!("{}{}{}", '{', arg, '}');
+			}
+
+			out
+		}
+
 		pub fn set_name(&mut self, cmd_name: &String) {
 			self.name = cmd_name.clone();
 		}
