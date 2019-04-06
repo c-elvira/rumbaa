@@ -121,11 +121,20 @@ pub mod texparser {
 						self.bufcmd.push(c);
 					}
 					else if c == '\\' {
-						// Start another macro
-						self.set_macro_name_from_buf();
-						macro_out = Some(self.stack_macro.pop().unwrap());
+						if self.bufcmd == "" {
+							// in fact we are handling \newline command
+							// delete previously created macro
 
-						self.stack_macro.push(TexMacro::new(EnumMacroType::Tex));    				
+							self.stack_macro.pop().unwrap();
+							self.current_state = self.stack_state.pop().unwrap();
+						}
+						else {
+							// Start another macro
+							self.set_macro_name_from_buf();
+							macro_out = Some(self.stack_macro.pop().unwrap());
+
+							self.stack_macro.push(TexMacro::new(EnumMacroType::Tex));
+						}
 					}
 					else if c == ' ' {
 						if self.bufcmd != "" {
@@ -404,6 +413,18 @@ pub mod texparser {
 		#[test]
 		fn clean_macro_name() {
 			//todo: remove white space in nested macro name
+		}
+
+		#[test]
+		fn handle_breakline() {
+			//todo: what happens when "//" is met?
+			let tex_line_part1 = String::from("\\\\");
+
+			let mut parser = TexParser::new();
+
+			for c in tex_line_part1.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
 		}
 }
 
