@@ -526,6 +526,40 @@ pub mod texparser {
 				assert!(parser.add_char(c).is_none())
 			}
 		}
+
+		#[test]
+		fn handle_bracket_macro() {
+			//todo: what happens when "//" is met?
+			let tex_line_part1 = "\\begin{equation}".to_string();
+			let tex_line_part2 = ' ';
+			let tex_line_part3 = "\\{ x | x > 0 \\}".to_string();
+			let tex_line_part4 = "\\end{equation}".to_string();
+			let tex_line_part5 = ' ';
+
+			let mut parser = TexParser::new();
+
+			for c in tex_line_part1.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			let opt_macro_out_1 = parser.add_char(tex_line_part2);
+			{
+				assert!(!opt_macro_out_1.is_none());
+			}
+
+			for c in tex_line_part3.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			for c in tex_line_part4.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			let opt_macro_out_2 = parser.add_char(tex_line_part5);
+			{
+				assert!(!opt_macro_out_2.is_none());
+			}
+		}
 	}
 }
 
