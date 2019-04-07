@@ -408,7 +408,86 @@ pub mod texparser {
 			assert!(macro_out_2.get_nb_args() == 1);
 			assert!(macro_out_2.get_arg(0) == String::from("\\macroTwo{arg}"));
 		}
-	}
+
+		#[test]
+		fn two_nested_macro() {	
+			let tex_line_1 = String::from("\\kvbar{\\kangle{\\atome");
+			let tex_line_2 = '(';
+			let tex_line_3 = String::from("\\param");
+			let tex_line_4 = ')';
+			let tex_line_5 = String::from(",\\Vobs");
+			let tex_line_6 = '}';
+			let tex_line_7 = '}';
+			let tex_line_8 = '\n';
+
+			let mut parser = TexParser::new();
+
+			// 1. Assert that nothing is returned
+			for c in tex_line_1.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			// 2. End of first macro
+			let opt_macro_out_1 = parser.add_char(tex_line_2);
+			{
+				assert!(!opt_macro_out_1.is_none());
+
+				let macro_out = opt_macro_out_1.unwrap();
+				assert!(macro_out.get_name() == String::from("atome"));
+				assert!(macro_out.get_nb_args() == 0);
+			}
+
+			// 3. nothing happen
+			for c in tex_line_3.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			// 4. End of second macro
+			let opt_macro_out_2 = parser.add_char(tex_line_4);
+			{
+				assert!(!opt_macro_out_2.is_none());
+
+				let macro_out = opt_macro_out_2.unwrap();
+				assert!(macro_out.get_name() == String::from("param"));
+				assert!(macro_out.get_nb_args() == 0);
+			}
+
+			// 5. nothing happen
+			for c in tex_line_5.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			// 6. End of second macro
+			let opt_macro_out_3 = parser.add_char(tex_line_6);
+			{
+				assert!(!opt_macro_out_3.is_none());
+
+				let macro_out = opt_macro_out_3.unwrap();
+				println!("{:?}", macro_out.get_name());
+				assert!(macro_out.get_name() == String::from("Vobs"));
+				assert!(macro_out.get_nb_args() == 1);
+			}
+
+			// 7. End of second macro
+			let opt_macro_out_5 = parser.add_char(tex_line_7);
+			{
+				assert!(!opt_macro_out_5.is_none());
+
+				let macro_out = opt_macro_out_5.unwrap();
+				assert!(macro_out.get_name() == String::from("kangle"));
+				assert!(macro_out.get_nb_args() == 1);
+			}
+
+			// 8. End of second macro
+			let opt_macro_out_6 = parser.add_char(tex_line_8);
+			{
+				assert!(!opt_macro_out_6.is_none());
+
+				let macro_out = opt_macro_out_6.unwrap();
+				assert!(macro_out.get_name() == String::from("kvbar"));
+				assert!(macro_out.get_nb_args() == 1);
+			}
+		}
 
 		#[test]
 		fn clean_macro_name() {
@@ -426,5 +505,6 @@ pub mod texparser {
 				assert!(parser.add_char(c).is_none())
 			}
 		}
+	}
 }
 
