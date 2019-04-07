@@ -54,12 +54,18 @@ pub mod texparser {
 
 	#[derive(Debug, Clone)]
 	enum TexParserState {
-		Empty,
+		Empty = 0,
 		InMacroName,
 		InMacro,
 		InMacroOptionalArg,
 		InMacroArg,
 		InComment,
+	}
+
+	#[derive(Debug, Clone)]
+	enum MacroArgType {
+		Arg,
+		Optional,
 	}
 
 	//struct TexParser<'a> {
@@ -104,8 +110,7 @@ pub mod texparser {
 						}
 
 						'%' => {
-							self.stack_state.push(self.current_state.clone());
-							self.current_state = TexParserState::InComment;
+							self.start_comment();
 						}
 
 						_ => {
@@ -129,19 +134,19 @@ pub mod texparser {
 						}
 						else {
 							// Start another macro
-							macro_out = Some(self.create_macro_from_buf());
+							self.add_macro_stack_from_buf();
+							macro_out = Some(self.close_macro());
 						}
 					}
 
 					else if c == '[' {
 						if self.current_buffer != "" {
-							let new_macro = self.create_macro_from_buf();
-
-							self.stack_macro.push(new_macro);
-							self.current_state = TexParserState::InMacroOptionalArg;
+							self.add_macro_stack_from_buf();
+							self.start_macro_arg(MacroArgType::Optional);
 						}
 						else {
 							// Not implemented yet
+							unimplemented!()
 						}
 					}
 
@@ -150,15 +155,13 @@ pub mod texparser {
 						if self.current_buffer == "" {
 							// we are dealing with \{ command ->
 							self.current_buffer.push(c);
-							macro_out = Some(self.create_macro_from_buf());
-							self.current_state = self.stack_state.pop().unwrap();
+							self.add_macro_stack_from_buf();
+							macro_out = Some(self.close_macro());
 						}
 
 						else {
-							let new_macro = self.create_macro_from_buf();
-
-							self.stack_macro.push(new_macro);
-							self.current_state = TexParserState::InMacroArg;
+							self.add_macro_stack_from_buf();
+							self.start_macro_arg(MacroArgType::Arg);
 						}
 					}
 
@@ -167,13 +170,13 @@ pub mod texparser {
 						if self.current_buffer == "" {
 							// We are dealing with macro such as \}, \#
 							self.current_buffer.push(c);
-							macro_out = Some(self.create_macro_from_buf());
-							self.current_state = self.stack_state.pop().unwrap();
+							self.add_macro_stack_from_buf();
+							macro_out = Some(self.close_macro());
 						}
 
 						else {
-							macro_out = Some(self.create_macro_from_buf());
-							self.current_state = self.stack_state.pop().unwrap();
+							self.add_macro_stack_from_buf();
+							macro_out = Some(self.close_macro());
 
 							match self.add_char(c) {
 								None => {
@@ -192,29 +195,23 @@ pub mod texparser {
 				TexParserState::InMacro => {
 
 					if c == '[' {
-						self.current_state = TexParserState::InMacroOptionalArg;
+						self.start_macro_arg(MacroArgType::Optional);
 					}
 
 					else if c == '{' {
-						self.current_state = TexParserState::InMacroArg;
+						self.start_macro_arg(MacroArgType::Arg);
 					}
 
 					else if c == '%' {
 						// Macro ends
-						macro_out = Some(self.stack_macro.pop().unwrap());
-						self.current_state = TexParserState::InComment;
+						macro_out = Some(self.close_macro());
+						self.start_comment();
 					}
 
 					else if c == '}' || c == ']' {
 						// In this case, we are inside nested macro
 						// close the inner macro, tell the outer arg ends
-
-						let ended_macro = self.stack_macro.pop().unwrap();
-						self.current_buffer = self.stack_buffer.pop().unwrap();
-						self.current_buffer += &ended_macro.get_tex_code();
-
-						macro_out = Some(ended_macro);
-						self.current_state = self.stack_state.pop().unwrap();
+						macro_out = Some(self.close_macro());
 
 						match self.add_char(c) {
 							None => {
@@ -229,20 +226,14 @@ pub mod texparser {
 					}
 
 					else {
-						macro_out =  Some(self.stack_macro.pop().unwrap());
-						self.current_state = self.stack_state.pop().unwrap();
+						macro_out =  Some(self.close_macro());
 					}
 				}
 
 				TexParserState::InMacroOptionalArg => {
 					match c {
 						']' => {
-							let mut tex_macro = self.stack_macro.pop().unwrap();
-							tex_macro.add_opt_arg(&self.current_buffer);
-							self.stack_macro.push(tex_macro);
-
-							self.current_buffer = String::from("");
-							self.current_state = TexParserState::InMacro;
+							self.add_arg_to_macro_from_buf(MacroArgType::Optional);
 						}
 
 						'\\' => {
@@ -251,8 +242,7 @@ pub mod texparser {
 						}
 
 						'%' => {
-							self.stack_state.push(self.current_state.clone());
-							self.current_state = TexParserState::InComment;
+							self.start_comment();
 						}
 
 						_ => {
@@ -264,12 +254,7 @@ pub mod texparser {
 				TexParserState::InMacroArg => {
 					match c {
 						'}' => {
-							let mut tex_macro = self.stack_macro.pop().unwrap();
-							tex_macro.add_arg(&self.current_buffer);
-							self.stack_macro.push(tex_macro);
-
-							self.current_buffer = String::from("");
-							self.current_state = TexParserState::InMacro;
+							self.add_arg_to_macro_from_buf(MacroArgType::Arg);
 						}
 
 						'\\' => {
@@ -278,8 +263,7 @@ pub mod texparser {
 						}
 
 						'%' => {
-							self.stack_state.push(self.current_state.clone());
-							self.current_state = TexParserState::InComment;
+							self.start_comment();
 						}
 
 						_ => {
@@ -293,9 +277,7 @@ pub mod texparser {
 						'\n' => {
 							// End of comment, process it
 							macro_out = self.parse_latexmk_macro();
-
-							self.buf_comment = "".to_string();
-							self.current_state = self.stack_state.pop().unwrap();
+							self.end_comment();
 						}
 
 						_ => {
@@ -308,6 +290,16 @@ pub mod texparser {
 			macro_out
 		}
 
+		fn start_comment(&mut self) {
+			self.stack_state.push(self.current_state.clone());
+			self.current_state = TexParserState::InComment;
+		}
+
+		fn end_comment(&mut self) {
+			self.buf_comment = "".to_string();
+			self.current_state = self.stack_state.pop().unwrap();
+		}
+
 		fn start_new_macro(&mut self) {
 			self.stack_state.push(self.current_state.clone());
 
@@ -317,7 +309,19 @@ pub mod texparser {
 			self.current_state = TexParserState::InMacroName;
 		}
 
-		fn create_macro_from_buf(&mut self) -> TexMacro {
+		fn start_macro_arg(&mut self, arg_type: MacroArgType) {
+			match arg_type {
+				MacroArgType::Arg => {
+					self.current_state = TexParserState::InMacroArg;
+				}
+
+				MacroArgType::Optional => {
+					self.current_state = TexParserState::InMacroOptionalArg;
+				}
+			}
+		}
+
+		fn add_macro_stack_from_buf(&mut self) {
 			let mut tex_macro = TexMacro::new(EnumMacroType::Tex);
 
 			let clean_name = self.current_buffer.replace(" ", "");
@@ -326,6 +330,43 @@ pub mod texparser {
 			tex_macro.set_name(&clean_name);
 
 			self.current_buffer = String::from("");
+
+			self.stack_macro.push(tex_macro);
+			self.current_state = TexParserState::InMacro;
+		}
+
+		fn add_arg_to_macro_from_buf(&mut self, arg_type: MacroArgType) {
+			let mut tex_macro = self.stack_macro.pop().unwrap();
+
+			match arg_type {
+				MacroArgType::Arg => {
+					tex_macro.add_arg(&self.current_buffer);
+				}
+				
+				MacroArgType::Optional => {
+					tex_macro.add_opt_arg(&self.current_buffer);
+				}
+			}
+
+			self.stack_macro.push(tex_macro);
+			self.current_buffer = String::from("");
+			self.current_state = TexParserState::InMacro;
+		}
+
+		fn close_macro(&mut self) -> TexMacro {
+			let tex_macro = self.stack_macro.pop().unwrap();
+
+			self.current_state = self.stack_state.pop().unwrap();
+			match self.current_state {
+				TexParserState::InMacroArg | TexParserState::InMacroOptionalArg => {
+					self.current_buffer = self.stack_buffer.pop().unwrap();
+					self.current_buffer += &tex_macro.get_tex_code();
+				},
+
+				_ => {
+					// do nothing
+				}
+			}
 
 			tex_macro
 		}
@@ -393,6 +434,7 @@ pub mod texparser {
 
 			// 2. Assert end of macro
 			let opt_macro_out = parser.add_char('\n');
+			println!("{:?}", parser.current_state);
 			assert!(!opt_macro_out.is_none());
 
 			// 3. Check argument
