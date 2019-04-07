@@ -146,20 +146,40 @@ pub mod texparser {
 					}
 
 					else if c == '{' {
-						if self.current_buffer != "" {
+
+						if self.current_buffer == "" {
+							// we are dealing with \{ command ->
+							self.current_buffer.push(c);
+							macro_out = Some(self.create_macro_from_buf());
+							self.current_state = self.stack_state.pop().unwrap();
+						}
+
+						else {
 							let new_macro = self.create_macro_from_buf();
 
 							self.stack_macro.push(new_macro);
 							self.current_state = TexParserState::InMacroArg;
 						}
-						else {
-							// Not implemented yet
-						}
 					}
 
 					else {
 						// Macro ends without argument
-						if self.current_buffer != "" {
+						if self.current_buffer == "" {
+							match c {
+								'}' => {
+									// We are dealing with \} macro
+									self.current_buffer.push(c);
+									macro_out = Some(self.create_macro_from_buf());
+									self.current_state = self.stack_state.pop().unwrap();
+								}
+
+								_ => {
+									unimplemented!()
+								}
+							}
+						}
+
+						else {
 							macro_out = Some(self.create_macro_from_buf());
 							self.current_state = self.stack_state.pop().unwrap();
 
@@ -173,9 +193,6 @@ pub mod texparser {
 									println!("this should not happen");
 								}
 							}	
-						}
-						else {
-							// Not implemented yet
 						}
 					}
 				}
@@ -532,9 +549,12 @@ pub mod texparser {
 			//todo: what happens when "//" is met?
 			let tex_line_part1 = "\\begin{equation}".to_string();
 			let tex_line_part2 = ' ';
-			let tex_line_part3 = "\\{ x | x > 0 \\}".to_string();
-			let tex_line_part4 = "\\end{equation}".to_string();
-			let tex_line_part5 = ' ';
+			let tex_line_part3 = '\\';
+			let tex_line_part4 = '{';
+			let tex_line_part5 = "x | x > 0\\".to_string();
+			let tex_line_part6 = '}';
+			let tex_line_part7 = "\\end{equation}".to_string();
+			let tex_line_part8 = ' ';
 
 			let mut parser = TexParser::new();
 
@@ -547,17 +567,25 @@ pub mod texparser {
 				assert!(!opt_macro_out_1.is_none());
 			}
 
-			for c in tex_line_part3.chars() {
+			assert!(parser.add_char(tex_line_part3).is_none());
+			assert!(!parser.add_char(tex_line_part4).is_none());
+
+			for c in tex_line_part5.chars() {
 				assert!(parser.add_char(c).is_none())
 			}
 
-			for c in tex_line_part4.chars() {
-				assert!(parser.add_char(c).is_none())
-			}
-
-			let opt_macro_out_2 = parser.add_char(tex_line_part5);
+			let opt_macro_out_2 = parser.add_char(tex_line_part6);
 			{
 				assert!(!opt_macro_out_2.is_none());
+			}
+
+			for c in tex_line_part7.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			let opt_macro_out_3 = parser.add_char(tex_line_part8);
+			{
+				assert!(!opt_macro_out_3.is_none());
 			}
 		}
 	}
