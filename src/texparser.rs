@@ -165,18 +165,10 @@ pub mod texparser {
 					else {
 						// Macro ends without argument
 						if self.current_buffer == "" {
-							match c {
-								'}' => {
-									// We are dealing with \} macro
-									self.current_buffer.push(c);
-									macro_out = Some(self.create_macro_from_buf());
-									self.current_state = self.stack_state.pop().unwrap();
-								}
-
-								_ => {
-									unimplemented!()
-								}
-							}
+							// We are dealing with macro such as \}, \#
+							self.current_buffer.push(c);
+							macro_out = Some(self.create_macro_from_buf());
+							self.current_state = self.stack_state.pop().unwrap();
 						}
 
 						else {
