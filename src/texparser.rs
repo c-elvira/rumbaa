@@ -69,6 +69,7 @@ pub mod texparser {
 		stack_state: Vec<TexParserState>,
 		stack_macro: Vec<TexMacro>,
 		current_buffer: String,
+		stack_buffer: Vec<String>,
 		buf_comment: String,
 	}
 
@@ -79,9 +80,8 @@ pub mod texparser {
 			TexParser {
 				current_state: TexParserState::Empty,
 				stack_state: Vec::new(),
-				//env_parser: EnvParser::new(doc_input),
-				//process_macro: callback_macro,
 				current_buffer: String::from(""),
+				stack_buffer: Vec::new(),
 				buf_comment: String::from(""),
 				stack_macro: Vec::new(),
 			}
@@ -162,6 +162,17 @@ pub mod texparser {
 						if self.current_buffer != "" {
 							macro_out = Some(self.create_macro_from_buf());
 							self.current_state = self.stack_state.pop().unwrap();
+
+							match self.add_char(c) {
+								None => {
+									// Ok
+								}
+
+								Some(_) => {
+									// This should not happen
+									println!("this should not happen");
+								}
+							}	
 						}
 						else {
 							// Not implemented yet
@@ -180,7 +191,8 @@ pub mod texparser {
 					}
 
 					else if c == '%' {
-						self.stack_state.push(self.current_state.clone());
+						// Macro ends
+						macro_out = Some(self.stack_macro.pop().unwrap());
 						self.current_state = TexParserState::InComment;
 					}
 
@@ -189,8 +201,8 @@ pub mod texparser {
 						// close the inner macro, tell the outer arg ends
 
 						let ended_macro = self.stack_macro.pop().unwrap();
-
-						self.current_buffer = ended_macro.get_tex_code();
+						self.current_buffer = self.stack_buffer.pop().unwrap();
+						self.current_buffer += &ended_macro.get_tex_code();
 
 						macro_out = Some(ended_macro);
 						self.current_state = self.stack_state.pop().unwrap();
@@ -288,10 +300,11 @@ pub mod texparser {
 		}
 
 		fn start_new_macro(&mut self) {
-			//let texmacro = TexMacro::new(EnumMacroType::Tex);
-			//self.stack_macro.push(texmacro);
-
 			self.stack_state.push(self.current_state.clone());
+
+			self.stack_buffer.push(self.current_buffer.clone());
+			self.current_buffer = String::from("");
+
 			self.current_state = TexParserState::InMacroName;
 		}
 
@@ -472,27 +485,26 @@ pub mod texparser {
 				assert!(!opt_macro_out_3.is_none());
 
 				let macro_out = opt_macro_out_3.unwrap();
-				println!("{:?}", macro_out.get_name());
 				assert!(macro_out.get_name() == String::from("Vobs"));
-				assert!(macro_out.get_nb_args() == 1);
+				assert!(macro_out.get_nb_args() == 0);
 			}
 
 			// 7. End of second macro
-			let opt_macro_out_5 = parser.add_char(tex_line_7);
+			let opt_macro_out_4 = parser.add_char(tex_line_7);
 			{
-				assert!(!opt_macro_out_5.is_none());
+				assert!(!opt_macro_out_4.is_none());
 
-				let macro_out = opt_macro_out_5.unwrap();
+				let macro_out = opt_macro_out_4.unwrap();
 				assert!(macro_out.get_name() == String::from("kangle"));
 				assert!(macro_out.get_nb_args() == 1);
 			}
 
 			// 8. End of second macro
-			let opt_macro_out_6 = parser.add_char(tex_line_8);
+			let opt_macro_out_5 = parser.add_char(tex_line_8);
 			{
-				assert!(!opt_macro_out_6.is_none());
+				assert!(!opt_macro_out_5.is_none());
 
-				let macro_out = opt_macro_out_6.unwrap();
+				let macro_out = opt_macro_out_5.unwrap();
 				assert!(macro_out.get_name() == String::from("kvbar"));
 				assert!(macro_out.get_nb_args() == 1);
 			}
