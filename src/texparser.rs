@@ -70,7 +70,7 @@ pub mod texparser {
 		stack_macro: Vec<TexMacro>,
 		current_buffer: String,
 		stack_buffer: Vec<String>,
-		buf_comment: String,
+		buf_comment: String, // todo: remove buf_comment (use stack_buffer instead)
 	}
 
 	//impl<'a> TexParser<'a> {

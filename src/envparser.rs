@@ -115,7 +115,6 @@ pub mod texparser {
 
 										_ => {
 											// Do noting
-											//println!("pas de chance");
 										}
 									}
 									self.stack_env_filtered.push(tex_env);
@@ -191,10 +190,6 @@ pub mod texparser {
 					self.stack_theorem.push(math_struct);
 				}
 
-				EnvEnumState::Proof => {
-					// Do nothing
-				}
-
 				EnvEnumState::Equation => {
 					// Add label to Theorem container if it exists
 					if self.stack_env_filtered.len() > 0 {
@@ -209,11 +204,14 @@ pub mod texparser {
 
 							_ => {
 								// Do noting
-								println!("pas de chance");
 							}
 						}
 						self.stack_env_filtered.push(tex_env);
 					}
+				}
+
+				EnvEnumState::Proof => {
+					// Do nothing
 				}
 
 				EnvEnumState::Other => {
@@ -247,6 +245,7 @@ pub mod texparser {
 					if label != "NOTH" {
 						self.doc.set_proof(&label, proof);
 					}
+
 					self.stack_env_filtered.pop().unwrap();
 				}
 
@@ -260,11 +259,101 @@ pub mod texparser {
 
 				EnvEnumState::None => {
 					// Error
-					println!("This should not happen...");
+					println!("Closing None env: this should not happen...");
 				}
 			}
 
 			self.current_env = self.stack_env.pop().unwrap();
+		}
+	}
+
+	/* -------------------------------
+
+				Tests
+
+	------------------------------- */
+
+
+	#[cfg(test)]
+	mod tests {
+
+		use crate::document::{Document};
+		use crate::texstruct::tex_logic::{EnumMacroType,TexMacro};
+		use crate::envparser::texparser::{EnvParser};
+
+		fn tex_macro_builder(name: String, arg1: String) -> TexMacro {
+			let mut macro_out = TexMacro::new(EnumMacroType::Tex);
+			macro_out.set_name(&name);
+			macro_out.add_arg(&arg1);
+
+			macro_out		
+		}
+
+		fn mk_macro_builder(name: String, arg1: String) -> TexMacro {
+			let mut macro_out = TexMacro::new(EnumMacroType::LatexMk);
+			macro_out.set_name(&name);
+			macro_out.add_arg(&arg1);
+
+			macro_out		
+		}
+
+		#[test]
+		fn open_and_close_env() {
+			let mut doc = Document::new("filename".to_string());
+			let mut env_parser = EnvParser::new(&mut doc);
+
+			let open_macro = tex_macro_builder(String::from("begin"), String::from("theorem"));
+			let label_macro = tex_macro_builder(String::from("label"), String::from("th:name"));
+			let close_macro = tex_macro_builder(String::from("end"), String::from("theorem"));
+
+			env_parser.process_macro(&open_macro);
+			env_parser.process_macro(&label_macro);
+			env_parser.process_macro(&close_macro);
+
+			assert!(doc.contains_key(&String::from("th:name")))
+		}
+
+		#[test]
+		fn equation_in_def() {
+			let mut doc = Document::new("filename".to_string());
+			let mut env_parser = EnvParser::new(&mut doc);
+
+			let open_def = tex_macro_builder(String::from("begin"), String::from("definition"));
+			let open_eq = tex_macro_builder(String::from("begin"), String::from("equation"));
+			let label_eq = tex_macro_builder(String::from("label"), String::from("eq:name"));
+			let close_eq = tex_macro_builder(String::from("end"), String::from("equation"));
+			let close_def = tex_macro_builder(String::from("end"), String::from("definition"));
+
+			let open_th = tex_macro_builder(String::from("begin"), String::from("theorem"));
+			let label_th = tex_macro_builder(String::from("label"), String::from("th:name"));
+			let close_th = tex_macro_builder(String::from("end"), String::from("theorem"));
+
+			let open_proof = tex_macro_builder(String::from("begin"), String::from("proof"));
+			let proof_of = mk_macro_builder(String::from("proof"), String::from("th:name"));
+			let ref_in_proof = tex_macro_builder(String::from("ref"), String::from("eq:name"));
+			let end_proof = tex_macro_builder(String::from("end"), String::from("proof"));
+
+			env_parser.process_macro(&open_def);
+			env_parser.process_macro(&open_eq);
+			env_parser.process_macro(&label_eq);
+			env_parser.process_macro(&close_eq);
+			env_parser.process_macro(&close_def);
+
+			env_parser.process_macro(&open_th);
+			env_parser.process_macro(&label_th);
+			env_parser.process_macro(&close_th);
+
+			env_parser.process_macro(&open_proof);
+			env_parser.process_macro(&proof_of);
+			env_parser.process_macro(&ref_in_proof);
+			env_parser.process_macro(&end_proof);
+
+			assert!(doc.contains_key(&String::from("th:name")));
+
+			let dep = doc.get_vec_dependences(&"th:name".to_string());
+			assert!(!dep.is_none());
+			let vec_dep = dep.unwrap();
+			assert!(vec_dep.len() == 1);
 		}
 	}
 }
