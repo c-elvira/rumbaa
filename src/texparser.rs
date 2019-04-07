@@ -564,6 +564,11 @@ pub mod texparser {
 		}
 
 		#[test]
+		fn handle_useless_bracket() {
+			//todo: 		\\macro{\\paramt_{\\ell}} does not work
+		}
+
+		#[test]
 		fn bug_ldotscoeff() {
 			//todo: something weird appears here:
 			// \\coeff_1\\ldotscoeff_{\\card(\\calG)
