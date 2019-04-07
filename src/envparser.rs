@@ -15,7 +15,7 @@ pub mod texparser {
 	use crate::document::{Document};
 	use crate::texstruct::tex_logic::{Theorem,EnumTheoremType,Proof};
 
-	#[derive(Clone, PartialEq)]
+	#[derive(Clone, Debug, PartialEq)]
 	enum EnvEnumState {
 		None,
 		Theorem, // definition, theorem, custom
@@ -101,24 +101,7 @@ pub mod texparser {
 
 						_ => {
 							if tex_macro.get_name().contains("ref") {
-								// Add reference to proof container if it exists
-								if self.stack_env_filtered.len() > 0 {
-									let tex_env = self.stack_env_filtered.pop().unwrap();
-									match tex_env {
-										EnvEnumState::Proof => {
-											let label = tex_macro.get_arg(0);
-											let mut proof = self.stack_proof.pop().unwrap();
-											//info!("add {} to {}", label, math_struct.clone_label());
-											proof.add_link(label);
-											self.stack_proof.push(proof);
-										}
-
-										_ => {
-											// Do noting
-										}
-									}
-									self.stack_env_filtered.push(tex_env);
-								}
+								self.manage_reference(&tex_macro);
 							}
 						}
 					}
@@ -149,35 +132,38 @@ pub mod texparser {
 		}
 
 		fn open_env(&mut self, env_name: &String) {
-			// 1. if is theorem, definition etc...
+			self.stack_env.push(self.current_env.clone());
+
 			if self.tex_struct_collection.contains_key(env_name) {
-				let tex_type = self.tex_struct_collection.get(env_name).unwrap().clone();
-				let math_struct = Theorem::new(String::from("NOLABEL"), tex_type);
-
-				self.stack_theorem.push(math_struct);
-				self.stack_env.push(self.current_env.clone());
+				// 1. if is theorem, definition etc...
 				self.current_env = EnvEnumState::Theorem;
-				self.stack_env_filtered.push(self.current_env.clone());
-			}
 
-			else if self.equation_env_collection.contains(&env_name) {
-				self.stack_env.push(self.current_env.clone());
-				self.current_env = EnvEnumState::Equation;
+				let tex_type = self.tex_struct_collection.get(env_name).unwrap().clone();
+
+				let math_struct = Theorem::new(String::from("NOLABEL"), tex_type);
+				self.stack_theorem.push(math_struct);
 			}
 
 			else if env_name == "proof" {
+				self.current_env = EnvEnumState::Proof;
+
 				let proof = Proof::new("NOTH".to_string());
 				self.stack_proof.push(proof);
+			}
 
-				self.stack_env.push(self.current_env.clone());
-				self.current_env = EnvEnumState::Proof;
-				self.stack_env_filtered.push(self.current_env.clone());
+			else if self.equation_env_collection.contains(&env_name) {
+				self.current_env = EnvEnumState::Equation;
 			}
 
 			else {
-				// We don't care
-				self.stack_env.push(self.current_env.clone());
 				self.current_env = EnvEnumState::Other;
+			}
+
+			match self.current_env {
+				EnvEnumState::Theorem | EnvEnumState::Proof => {
+					self.stack_env_filtered.push(self.current_env.clone());
+				}
+				_ => ()
 			}
 		}
 
@@ -226,6 +212,7 @@ pub mod texparser {
 
 		fn close_env(&mut self) {
 			match self.current_env {
+
 				EnvEnumState::Theorem => {
 					let mut math_struct = self.stack_theorem.pop().unwrap();
 					let mut label = math_struct.clone_label();
@@ -243,7 +230,12 @@ pub mod texparser {
 					let label = proof.get_struct_label();
 
 					if label != "NOTH" {
-						self.doc.set_proof(&label, proof);
+						if self.doc.contains_key(&label) {
+							self.doc.set_proof(&label, proof);
+						}
+						else {
+							warn!("Theorem {} not found", label)
+						}
 					}
 
 					self.stack_env_filtered.pop().unwrap();
@@ -264,6 +256,31 @@ pub mod texparser {
 			}
 
 			self.current_env = self.stack_env.pop().unwrap();
+		}
+
+		fn manage_reference(&mut self, tex_macro: &TexMacro) {
+			// Add reference to proof container if it exists
+			if self.stack_env_filtered.len() > 0 {
+				let tex_env = self.stack_env_filtered.pop().unwrap();
+
+				match tex_env {
+				
+					EnvEnumState::Proof => {
+						let label = tex_macro.get_arg(0);
+						let mut proof = self.stack_proof.pop().unwrap();
+			
+						//info!("add {} to {}", label, math_struct.clone_label());
+						proof.add_link(label);
+						self.stack_proof.push(proof);
+					}
+
+					_ => {
+						// Do noting
+					}
+				}
+			
+				self.stack_env_filtered.push(tex_env);
+			}
 		}
 	}
 
