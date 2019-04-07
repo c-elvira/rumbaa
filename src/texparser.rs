@@ -136,6 +136,7 @@ pub mod texparser {
 							// Start another macro
 							self.add_macro_stack_from_buf();
 							macro_out = Some(self.close_macro());
+							self.start_new_macro();
 						}
 					}
 
@@ -178,16 +179,7 @@ pub mod texparser {
 							self.add_macro_stack_from_buf();
 							macro_out = Some(self.close_macro());
 
-							match self.add_char(c) {
-								None => {
-									// Ok
-								}
-
-								Some(_) => {
-									// This should not happen
-									println!("this should not happen");
-								}
-							}	
+							self.re_inject_character(c);
 						}
 					}
 				}
@@ -213,16 +205,7 @@ pub mod texparser {
 						// close the inner macro, tell the outer arg ends
 						macro_out = Some(self.close_macro());
 
-						match self.add_char(c) {
-							None => {
-								// Ok
-							}
-
-							Some(_) => {
-								// This should not happen
-								println!("this should not happen");
-							}
-						}
+						self.re_inject_character(c);
 					}
 
 					else {
@@ -371,6 +354,19 @@ pub mod texparser {
 			tex_macro
 		}
 
+		fn re_inject_character(&mut self, c: char) {
+			match self.add_char(c) {
+				None => {
+					// Ok
+				}
+
+				Some(_) => {
+					// This should not happen
+					println!("this should not happen");
+				}
+			}	
+		}
+
 		fn parse_latexmk_macro(&mut self) -> Option<TexMacro> {
 
 			let mut macro_out = None;
@@ -420,6 +416,7 @@ pub mod texparser {
 	#[cfg(test)]
 	mod tests {
 
+		use crate::texstruct::tex_logic::TexMacro;
 		use crate::texparser::texparser::{TexParser};
 
 		#[test]
@@ -564,6 +561,28 @@ pub mod texparser {
 		#[test]
 		fn clean_macro_name() {
 			//todo: remove white space in nested macro name
+		}
+
+		#[test]
+		fn bug_ldotscoeff() {
+			//todo: something weird appears here:
+			// \\coeff_1\\ldotscoeff_{\\card(\\calG)
+			let tex_line = String::from("\\ldots\\coeff\\ldots ");
+			let mut parser = TexParser::new();
+
+			let mut vec_macro: Vec<TexMacro>;
+			vec_macro = Vec::new();
+			for c in tex_line.chars() {
+				match parser.add_char(c) {
+					Some(m) => {
+						println!("{:?}", m.get_tex_code());
+						vec_macro.push(m)
+					}
+					None => ()
+				}
+			}
+
+			assert!(vec_macro.len() == 3);
 		}
 
 		#[test]
