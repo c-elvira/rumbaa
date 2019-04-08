@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use crate::texstruct::{TexStructure,Proof};
+use crate::texstruct::tex_logic::{Theorem,Proof};
 
 pub struct Document {
 	pub filename: String,
-	pub list_tex_struct: HashMap<String, TexStructure>,
+	pub list_tex_struct: HashMap<String, Theorem>,
 }
 
 impl Document {
@@ -16,13 +16,14 @@ impl Document {
 		}
 	}
 	
-	pub fn push(&mut self, key: String, tex: TexStructure) -> &mut Self {
+	pub fn push(&mut self, key: String, tex: Theorem) -> &mut Self {
 		self.list_tex_struct.insert(key, tex);
 		
 		// return self
 		self
 	}
 
+	#[allow(dead_code)]
 	pub fn print(&self) -> String {
 		let mut output = String::from("Printing tex structures\n");
 
@@ -35,7 +36,7 @@ impl Document {
 		output
 	}
 
-	pub fn keys(&self) -> std::collections::hash_map::Keys<'_, String, TexStructure> {
+	pub fn keys(&self) -> std::collections::hash_map::Keys<'_, String, Theorem> {
 		self.list_tex_struct.keys()
 	}
 
@@ -63,7 +64,7 @@ impl Document {
 		return None
 	}
 
-	pub fn get(&self, key: &String) -> &TexStructure {
+	pub fn get(&self, key: &String) -> &Theorem {
 		&self.list_tex_struct[key]
 	}
 
