@@ -74,6 +74,7 @@ pub mod texparser {
 		current_state: TexParserState,
 		stack_state: Vec<TexParserState>,
 		stack_macro: Vec<TexMacro>,
+		stack_env_bracket: Vec<i32>, // count brackets of the form \prod_{i=1}
 		current_buffer: String,
 		stack_buffer: Vec<String>,
 		buf_comment: String, // todo: remove buf_comment (use stack_buffer instead)
@@ -90,6 +91,7 @@ pub mod texparser {
 				stack_buffer: Vec::new(),
 				buf_comment: String::from(""),
 				stack_macro: Vec::new(),
+				stack_env_bracket: Vec::new(),
 			}
 		}
 
@@ -236,8 +238,21 @@ pub mod texparser {
 
 				TexParserState::InMacroArg => {
 					match c {
+						'{' => {
+							let i = self.stack_env_bracket.pop().unwrap();
+							self.stack_env_bracket.push(i+1);
+							self.current_buffer.push(c);
+						}
 						'}' => {
-							self.add_arg_to_macro_from_buf(MacroArgType::Arg);
+							let i = self.stack_env_bracket.pop().unwrap();
+							if i == 0 {
+								self.add_arg_to_macro_from_buf(MacroArgType::Arg);
+								self.stack_env_bracket.push(i);
+							}
+							else {
+								self.current_buffer.push(c);
+								self.stack_env_bracket.push(i-1);
+							}
 						}
 
 						'\\' => {
@@ -315,6 +330,7 @@ pub mod texparser {
 			self.current_buffer = String::from("");
 
 			self.stack_macro.push(tex_macro);
+			self.stack_env_bracket.push(0);
 			self.current_state = TexParserState::InMacro;
 		}
 
@@ -338,6 +354,7 @@ pub mod texparser {
 
 		fn close_macro(&mut self) -> TexMacro {
 			let tex_macro = self.stack_macro.pop().unwrap();
+			self.stack_env_bracket.pop();
 
 			self.current_state = self.stack_state.pop().unwrap();
 			match self.current_state {
@@ -566,6 +583,27 @@ pub mod texparser {
 		#[test]
 		fn handle_useless_bracket() {
 			//todo: 		\\macro{\\paramt_{\\ell}} does not work
+			let tex_line = String::from("\\prod{\\lambda_{1}} ");
+			let mut parser = TexParser::new();
+
+			let mut vec_macro: Vec<TexMacro>;
+			vec_macro = Vec::new();
+			for c in tex_line.chars() {
+				match parser.add_char(c) {
+					Some(m) => {
+						println!("{:?}", m.get_tex_code());
+						vec_macro.push(m)
+					}
+					None => ()
+				}
+			}
+
+			assert!(vec_macro.len() == 2);
+			let macro1 = &vec_macro[0];
+			assert!(macro1.get_tex_code() == String::from("\\lambda"));
+
+			let macro2 = &vec_macro[1];
+			assert!(macro2.get_tex_code() == String::from("\\prod{\\lambda_{1}}"));
 		}
 
 		#[test]
