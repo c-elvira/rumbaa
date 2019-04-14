@@ -5,7 +5,7 @@ mod document;
 mod texstruct;
 mod preprocessing;
 mod auxparser;
-mod visualize;
+mod visualize2;
 
 #[macro_use] extern crate clap;
 #[macro_use] extern crate log;
@@ -98,7 +98,7 @@ fn main() {
 
 	// 4. Visualization
     trace!("4. Visualization");
-    visualize::visualize(&doc, &output_folder)
+    visualize2::visualize(&doc, &output_folder)
     	.expect("Something went wrong when exporting tex document");
 }
 
