@@ -1,10 +1,12 @@
-# rumbaa - RUst Mathematics Bloc Analysis for lAtex document
+# Rumbaa - RUst Mathematics Bloc Analysis for lAtex document
 [![Build Status](https://travis-ci.com/c-elvira/rumbaa.svg?token=rHHx69ioGqz4NFraNjyT&branch=master)](https://travis-ci.com/c-elvira/rumbaa)
 
-rumbaa is a mathematical analyzer for latex documents written in Rust.
-The output of rumbaa is graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...)
+**Rumbaa** is a theorem analyzer for latex documents written in Rust.
+With Tex files as input, **Rumbaa** outputs a graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...)
 
 ![example](docs/struct_example.png)
+The above example shows has been obtained from:
+	- When does OMP achieves support recovery with continuous dictionaries?** by Clément Elvira, Rémi Gribonval, Charles Soussen, and Cédric Herzet, 2019 
 
 ## Installation - *Work in progress*
 
@@ -24,7 +26,8 @@ git clone https://github.com/c-elvira/rumbaa.git
 
 1. Formating Latex document
 
-**Latex environments:** rumbaa looks after the usual latex structures such as *Theorem*, *Proposition* etc... Your latex document should look like this:
+**Latex environments:** Rumbaa parses Latex documents by looking after the usual latex structures such as *Theorem*, *Proposition*, etc.
+Your latex document should look like this:
 ``` latex
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -35,16 +38,14 @@ git clone https://github.com/c-elvira/rumbaa.git
     \label{th:my_label}
     ...
 \end{theorem}
-
 ```
-Note that several labels may appear in such a latex environment.
-This is not an issue here.
-However, the first one should be associated to the environment.
+To avoid issues, the file should compiled without warning and all structures should be labeled.
+
 
 
 **Proofs:**
-In order to create links between mathematical structures, rumbaa parses proofs.
-Since a proof may not be right after its associated results, I recommend adding the following *latexmk*-like option in the proof environment:
+In order to create links between mathematical structures, Rumbaa also parses proofs.
+Since a proof may not be right after a result, I recommend adding the following *latexmk*-like option in the proof environment:
 ``` latex
 \begin{proof}
     %!TEX proof = {th:my_label}
@@ -53,10 +54,11 @@ Since a proof may not be right after its associated results, I recommend adding 
 ```
 
 
-**Nested documents:** rumbaa can handle nested latex files. For now, only `\input{file}` is supported.
+**Nested documents:** Rumbaa can handle nested latex files. For now, only `\input{file}` and `\include{file}` are supported.
 
 
-**Auxiliary files:** By default, rumbaa identifies a mathematical structure by its label. If the auxiliary files produced by latex (.aux) are found, rumbaa will parse them to improve visualization.
+**Auxiliary files:** By default, Rumbaa identifies a mathematical structure by its label.
+If the auxiliary files produced by latex (.aux) are found, Rumbaa will also parse them to improve visualization.
 
 2. Terminal
 
@@ -71,17 +73,18 @@ The outputs are
 Options are:
  * -f, --folder: if the main latex file is not in the current directory,
  * -o, --output: to specify the output directory, 
- * -a, --aux: to specify the directory containing auxiliary files (may improve visualization). 
+ * -a, --aux: to specify the directory containing auxiliary files (may improve visualization),
+ * --arxiv to keep a clean and all in one document.
 
 
 ## Milestones
 
  - [x] Fist prototype: parse a multi-files latex document and display 
- - [ ] Use equation label to improve connections between mathematical structures
- - [ ] Use custom structures for latex (others than basic ones)
+ - [x] Use equation label to improve connections between mathematical structures
+ - [x] Use custom structures for latex (others than basic ones)
  - [ ] Improve output
  - [ ] Generate report
- - [ ] Unit testing
+ - [x] Unit testing
 
 
 ## Work in progress
@@ -90,7 +93,7 @@ This is still a work in progress so there's still bugs to iron out. As this is m
 
 ## Alternatives
 
-If you known any alternative to rumbaa feel free to raise issue/submit a PR or send me a mail.
+If you known any alternative to Rumbaa feel free to raise issue/submit a PR or send me a mail.
 
 ## License
 
