@@ -7,7 +7,7 @@ With Tex files as input, **Rumbaa** outputs a graph displaying the dependencies 
 ![example](docs/struct_example.png)
 
 The above example shows has been obtained from:
-	- When does OMP achieves support recovery with continuous dictionaries?** by Clément Elvira, Rémi Gribonval, Charles Soussen, and Cédric Herzet, 2019 
+	- **When does OMP achieves support recovery with continuous dictionaries?** by Clément Elvira, Rémi Gribonval, Charles Soussen, and Cédric Herzet, 2019 
 
 ## Installation - *Work in progress*
 
