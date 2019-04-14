@@ -5,4 +5,5 @@ pub mod texstruct;
 pub mod texparser;
 pub mod envparser;
 pub mod visualize;
+pub mod visualize2;
 pub mod preprocessing;
