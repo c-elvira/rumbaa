@@ -6,7 +6,7 @@ With Tex files as input, **Rumbaa** outputs a graph displaying the dependencies 
 
 ![example](docs/struct_example.png)
 
-The above example shows has been obtained from:
+The above example has been obtained with:
 	- **When does OMP achieves support recovery with continuous dictionaries?** by Clément Elvira, Rémi Gribonval, Charles Soussen, and Cédric Herzet, 2019 
 
 ## Installation - *Work in progress*
@@ -84,7 +84,8 @@ Options are:
  - [x] Use equation label to improve connections between mathematical structures
  - [x] Use custom structures for latex (others than basic ones)
  - [ ] Improve output
- - [ ] Generate report
+ - [ ] Generate a report
+ - [ ] Installation using brew, and so on
  - [x] Unit testing
 
 
