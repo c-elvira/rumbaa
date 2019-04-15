@@ -7,6 +7,8 @@ texdata/main.pdf
 texdata/aux/*.pdf
 texdata/*
 test_a_coder.md
+!texdata/aux/main.aux
+
 
 # Created by https://www.gitignore.io/api/rust,latex
 # Edit at https://www.gitignore.io/?templates=rust,latex
@@ -289,3 +291,8 @@ Cargo.lock
 **/*.rs.bk
 
 # End of https://www.gitignore.io/api/rust,latex
+
+!texdata/aux/main.aux
+
+
+
