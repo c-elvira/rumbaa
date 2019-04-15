@@ -48,7 +48,7 @@ fn _export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> 
 		let name1 = doc.get_name_from_key(key).unwrap();
 
 		// Adding first self reference to create node if unused
-		let self_ref = format!("\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}}, ", name1, name1);
+		let self_ref = format!("\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"type\": 1}}, ", name1, name1);
 		writeln!(
 			jsonfile,
 			"{}", self_ref
@@ -64,7 +64,7 @@ fn _export_json_links(doc: &Document, jsonfile: &mut File) -> Result<(), Error> 
 
 			writeln!(
 				jsonfile,
-				"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"value\": 1}},", name1, name2,
+				"\t\t{{\"source\": \"{}\", \"target\":\"{}\", \"type\": 1}},", name1, name2,
 			).unwrap();
 		}
 	}
