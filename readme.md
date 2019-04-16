@@ -59,7 +59,7 @@ Since a proof may not be right after a result, I recommend adding the following 
 
 
 **Auxiliary files:** By default, Rumbaa identifies a mathematical structure by its label.
-If the auxiliary files produced by latex (.aux) are found, Rumbaa will also parse them to improve visualization.
+If the auxiliary files produced by latex (namely .aux files) are found, Rumbaa will also parse them to improve visualization.
 
 2. Terminal
 
@@ -78,14 +78,20 @@ Options are:
  * --arxiv to keep a clean and all in one document.
 
 
+## (simple) Example usage
+
+TODO
+
+
 ## Milestones
 
  - [x] Fist prototype: parse a multi-files latex document and display 
  - [x] Use equation label to improve connections between mathematical structures
- - [x] Use custom structures for latex (others than basic ones)
+ - [x] Use custom structures for latex
  - [ ] Improve output
  - [ ] Generate a report
- - [ ] Installation using brew, and so on
+ - [ ] Easy installation (e.g. brew)
+ - [ ] First release
  - [x] Unit testing
 
 
@@ -99,5 +105,5 @@ If you known any alternative to Rumbaa feel free to raise issue/submit a PR or s
 
 ## License
 
-rumbaa is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+Rumbaa is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
