@@ -11,21 +11,21 @@ The above example has been obtained with:
 
 ## Installation - *Work in progress*
 
-1. Make sure that Rust is available on your computer. Otherwise see [this link](https://www.rust-lang.org/tools/install).
+##### 1. Make sure that Rust is available on your computer. Otherwise see [this link](https://www.rust-lang.org/tools/install).
 
-2. Download repository
+##### 2. Download repository
 ```
 git clone https://github.com/c-elvira/rumbaa.git
 ```
 
-3. Run the installation script
+##### 3. Run the installation script
 ```
 ./install.sh
 ```
 
 ## Usage
 
-1. Formating Latex document
+##### 1. Formating Latex document
 
 **Latex environments:** Rumbaa parses Latex documents by looking after the usual latex structures such as *Theorem*, *Proposition*, etc.
 Your latex document should look like this:
@@ -61,7 +61,7 @@ Since a proof may not be right after a result, I recommend adding the following 
 **Auxiliary files:** By default, Rumbaa identifies a mathematical structure by its label.
 If the auxiliary files produced by latex (namely .aux files) are found, Rumbaa will also parse them to improve visualization.
 
-2. Terminal
+##### 2. Terminal
 
 In your terminal, call
 ```
@@ -69,7 +69,7 @@ In your terminal, call
 ```
 The outputs are
  * A html file called *index.html*. open it to see the mathematical structure of your document,
- * a json files containing the detected structures and links.
+ * a log file.
 
 Options are:
  * -f, --folder: if the main latex file is not in the current directory,
@@ -80,7 +80,24 @@ Options are:
 
 ## (simple) Example usage
 
-TODO
+Below is a (simple) example of basic usage of Rumbaa.
+Tex files are provided in the `example` folder.
+
+##### 1. Run the example with Cargo
+
+If Rumbaa is not installed, the project can be compiled with *cargo*.
+In the repository folder, run
+```shell
+cargo run main.tex -f example -a example/aux -o example/out
+```
+
+##### 2. if Rumbaa is installed
+
+Run
+```shell
+cd example
+rumbaa main.tex -a aux -o out
+```
 
 
 ## Milestones
