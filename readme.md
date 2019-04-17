@@ -2,7 +2,8 @@
 [![Build Status](https://travis-ci.com/c-elvira/rumbaa.svg?token=rHHx69ioGqz4NFraNjyT&branch=master)](https://travis-ci.com/c-elvira/rumbaa)
 
 **Rumbaa** is a theorem analyzer for latex documents written in Rust.
-With Tex files as input, **Rumbaa** outputs a graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...)
+With Tex files as input, **Rumbaa** outputs a graph displaying the dependencies between mathematical structures (*e.g.*, theorems, lemmas etc...).
+Below is an interactive example available [here](http://c-elvira.github.io/pdf/graphs/elvira2019preprint.html)
 
 ![example](docs/struct_example.png)
 
@@ -75,7 +76,8 @@ Options are:
  * -f, --folder: if the main latex file is not in the current directory,
  * -o, --output: to specify the output directory, 
  * -a, --aux: to specify the directory containing auxiliary files (may improve visualization),
- * --arxiv to keep a clean and all in one document.
+ * --arxiv to keep a clean and all in one document,
+ * --debug to get the most verbose logging level.
 
 
 ## (simple) Example usage
@@ -91,7 +93,7 @@ In the repository folder, run
 cargo run main.tex -f example -a example/aux -o example/out
 ```
 
-##### 2. if Rumbaa is installed
+##### 2. Or if Rumbaa is installed
 
 Run
 ```shell

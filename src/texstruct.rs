@@ -40,10 +40,12 @@ pub mod tex_logic {
 			self.name.clone()
 		}
 
+		#[allow(dead_code)]
 		pub fn get_nb_args(&self) -> usize {
 			self.args.len()
 		}
 
+		#[allow(dead_code)]
 		pub fn get_nb_opt_args(&self) -> usize {
 			self.option_args.len()
 		}
@@ -56,6 +58,7 @@ pub mod tex_logic {
 			self.args[i].clone()
 		}
 
+		#[allow(dead_code)]
 		pub fn get_opt_arg(&self, i: usize) -> String {
 			self.option_args[i].clone()
 		}
@@ -82,6 +85,7 @@ pub mod tex_logic {
 			self.args.push(arg.clone());
 		}
 
+		#[allow(dead_code)]
 		pub fn add_opt_arg(&mut self, opt_arg: &String) {
 			self.option_args.push(opt_arg.clone());
 		}
@@ -194,6 +198,7 @@ pub mod tex_logic {
 			}
 		}
 
+		#[allow(dead_code)]
 		pub fn get_group(&self) -> i32 {
 			let out :i32 = self.theorem_type.clone() as i32;
 

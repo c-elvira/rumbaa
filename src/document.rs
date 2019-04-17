@@ -79,6 +79,7 @@ impl Document {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn get_group_from_key(&self, key: &String) -> Option<i32> {
 		match self.list_tex_struct.get(key) {
 			Some(texstruct) => {
