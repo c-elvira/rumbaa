@@ -20,15 +20,6 @@ use std::fs::{File,create_dir_all,remove_file};
 
 fn main() {
 
-	// 0. Create logger
-    CombinedLogger::init(
-        vec![
-            TermLogger::new(LevelFilter::Trace, Config::default()).unwrap(),
-            WriteLogger::new(LevelFilter::Trace, Config::default(), File::create("rumbaa.log").unwrap()),
-        ]
-    ).unwrap();
-    trace!("Processing inputs");
-
 	// 1. Processing input arguments
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
@@ -63,6 +54,16 @@ fn main() {
 	};
 
 	let verbose = matches.occurrences_of("verbose");
+
+	// 0. Create logger
+    CombinedLogger::init(
+        vec![
+            TermLogger::new(LevelFilter::Trace, Config::default()).unwrap(),
+            WriteLogger::new(LevelFilter::Trace,
+            	Config::default(),
+            	File::create(output_folder.clone() + &"rumbaa.log".to_string()).unwrap()),
+        ]
+    ).unwrap();
 
 	//
     trace!("Processing file {}:", filename);
