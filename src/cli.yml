@@ -30,6 +30,11 @@ args:
         long: arxiv
         help: save clean file
         takes_value: false
+    - debug:
+        short: d
+        long: debug
+        help: enable additional verbose
+        takes_value: false
     - verbose:
         short: v
         long: verbose

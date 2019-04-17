@@ -42,10 +42,9 @@ fn main() {
 	};
 
 	let save_to_arxiv = matches.is_present("arxiv");
-	if save_to_arxiv{
-	    info!("Saving clean arXiv version");
-	}
 	let arxiv_filename = data_folder.clone() + &String::from("arxiv.tex");
+
+	let debug = matches.is_present("debug");
 
 	match create_dir_all(&output_folder) {
 		Ok(_) => (),
@@ -56,14 +55,22 @@ fn main() {
 	let verbose = matches.occurrences_of("verbose");
 
 	// 0. Create logger
+	let log_filter = match debug {
+		true => LevelFilter::Trace,
+		false => LevelFilter::Info,
+	};
     CombinedLogger::init(
         vec![
-            TermLogger::new(LevelFilter::Trace, Config::default()).unwrap(),
+            TermLogger::new(log_filter, Config::default()).unwrap(),
             WriteLogger::new(LevelFilter::Trace,
             	Config::default(),
             	File::create(output_folder.clone() + &"rumbaa.log".to_string()).unwrap()),
         ]
     ).unwrap();
+
+	if save_to_arxiv{
+	    info!("Saving clean arXiv version");
+	}
 
 	//
     trace!("Processing file {}:", filename);

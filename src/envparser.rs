@@ -72,7 +72,7 @@ pub mod texparser {
 
 				EnumMacroType::Tex => {
 
-					info!("Process Tex Macro: {} - {:?}", tex_macro.get_name(), tex_macro.get_args());
+					trace!("Process Tex Macro: {} - {:?}", tex_macro.get_name(), tex_macro.get_args());
 
 					match tex_macro.get_name().as_ref() {
 						"newtheorem" => {
@@ -108,7 +108,7 @@ pub mod texparser {
 				}
 
 				EnumMacroType::LatexMk => {
-					info!("Process LatexMk Macro: {} - {:?}", tex_macro.get_name(), tex_macro.get_args());
+					trace!("Process LatexMk Macro: {} - {:?}", tex_macro.get_name(), tex_macro.get_args());
 
 					match tex_macro.get_name().as_ref() {
 
