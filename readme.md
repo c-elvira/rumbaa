@@ -8,7 +8,7 @@ Below is an interactive example available [here](http://c-elvira.github.io/pdf/g
 ![example](docs/struct_example.png)
 
 The above example has been obtained with:
-	- **When does OMP achieves support recovery with continuous dictionaries?** by Clément Elvira, Rémi Gribonval, Charles Soussen, and Cédric Herzet, 2019 
+	- **When does OMP achieve support recovery with continuous dictionaries?** by Clément Elvira, Rémi Gribonval, Charles Soussen, and Cédric Herzet, 2019 
 
 ## Installation - *Work in progress*
 
