@@ -45,7 +45,6 @@ pub mod tex_logic {
 			self.args.len()
 		}
 
-		#[allow(dead_code)]
 		pub fn get_nb_opt_args(&self) -> usize {
 			self.option_args.len()
 		}
@@ -58,7 +57,6 @@ pub mod tex_logic {
 			self.args[i].clone()
 		}
 
-		#[allow(dead_code)]
 		pub fn get_opt_arg(&self, i: usize) -> String {
 			self.option_args[i].clone()
 		}
@@ -220,6 +218,8 @@ pub mod tex_logic {
 	pub struct Proof {
 		struct_label: String,
 		links: Vec<String>,
+
+		title: String,
 	}
 
 	impl Proof {
@@ -227,6 +227,8 @@ pub mod tex_logic {
 			Self {
 				struct_label: label,
 				links: Vec::new(),
+
+				title: String::from("Proof"),
 			}
 		}
 
@@ -246,8 +248,16 @@ pub mod tex_logic {
 			self.struct_label.clone()
 		}
 
+		pub fn get_title(&self) -> &String {
+			&self.title
+		}
+
 		pub fn set_struct_label(&mut self, label: &String) {
 			self.struct_label = label.clone();
+		}
+
+		pub fn set_title(&mut self, arg: &String) {
+			self.title = arg.clone();
 		}
 	}
 }
