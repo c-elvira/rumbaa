@@ -120,7 +120,6 @@ pub mod texparser {
 							if self.current_env == EnvEnumState::Proof {
 								let label = &tex_macro.get_arg(0);
 
-								info!("Tex parser has found proof of {}", label);
 								let mut proof = self.stack_proof.pop().unwrap();
 								proof.set_struct_label(label);
 								self.stack_proof.push(proof);
@@ -244,18 +243,26 @@ pub mod texparser {
 
 					if label != "NOTH" {
 						if self.doc.contains_key(&label) {
+							info!("The proof of {} has been processed", label);
 							self.doc.set_proof(&label, proof);
 						}
 						else {
-							match self.detect_theorem_proof_from_opt_arg(&proof) {
-								Some(l) => {
-									if self.doc.contains_key(&l) {
-										self.doc.set_proof(&l, proof);
-									}
+							info!("The proof of {} has been processed but the Theorem has not been found", label);
+						}
+					}
+					else {
+						match self.detect_theorem_proof_from_opt_arg(&proof) {
+							Some(l) => {
+								if self.doc.contains_key(&l) {
+									info!("The proof of {} has been processed", label);
+									self.doc.set_proof(&l, proof);
 								}
-								None => {
-									warn!("Theorem {} not found", label)
+								else {
+									info!("The proof of {} has been processed but the Theorem has not been found", label);
 								}
+							}
+							None => {
+								warn!("Theorem {} not found", label)
 							}
 						}
 					}
