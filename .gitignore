@@ -10,6 +10,13 @@ test_a_coder.md
 !texdata/aux/main.aux
 installation.md
 rumbaa.sublime-project
+rumbaa.sublime-workspace
+
+example/aux/main.pdf
+example/out/graph_theorem.html
+example/test.tex
+example/th.tex
+
 
 
 # Created by https://www.gitignore.io/api/rust,latex
