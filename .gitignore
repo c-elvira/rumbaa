@@ -8,6 +8,8 @@ texdata/aux/*.pdf
 texdata/*
 test_a_coder.md
 !texdata/aux/main.aux
+installation.md
+rumbaa.sublime-project
 
 
 # Created by https://www.gitignore.io/api/rust,latex
