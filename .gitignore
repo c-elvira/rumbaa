@@ -17,7 +17,7 @@ example/out/graph_theorem.html
 example/test.tex
 example/th.tex
 
-
+tex_tests/*
 
 # Created by https://www.gitignore.io/api/rust,latex
 # Edit at https://www.gitignore.io/?templates=rust,latex
