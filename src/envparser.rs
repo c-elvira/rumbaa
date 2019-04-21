@@ -86,7 +86,7 @@ pub mod texparser {
 						"begin" => {
 							// process environment
 							let env_name = tex_macro.get_arg(0);
-							self.open_env(&env_name);
+							self.open_env(&env_name, &tex_macro);
 						}
 
 						"end" => {
@@ -131,7 +131,7 @@ pub mod texparser {
 			}
 		}
 
-		fn open_env(&mut self, env_name: &String) {
+		fn open_env(&mut self, env_name: &String, tex_macro: &TexMacro) {
 			self.stack_env.push(self.current_env.clone());
 
 			if self.tex_struct_collection.contains_key(env_name) {
@@ -147,7 +147,16 @@ pub mod texparser {
 			else if env_name == "proof" {
 				self.current_env = EnvEnumState::Proof;
 
-				let proof = Proof::new("NOTH".to_string());
+				let mut proof = Proof::new("NOTH".to_string());
+
+				// Eventually add optional arguments to proof
+				// (may contains Proof of \ref{...})
+				if  tex_macro.get_nb_opt_args() > 0 {
+					let arg = tex_macro.get_opt_arg(0);
+					proof.set_opt_arg(&arg);
+				}
+
+				// Add proof to stack
 				self.stack_proof.push(proof);
 			}
 
