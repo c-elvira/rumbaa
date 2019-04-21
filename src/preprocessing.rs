@@ -86,7 +86,10 @@ mod process_text_internal {
 						let filename = cmd_input.1;
 						line = line.replace(&latex_cmd, "");
 
-				   		let input_file_name = folder.to_owned() + &filename + &String::from(".tex");
+				   		let mut input_file_name = folder.to_owned() + &filename;
+				   		if !input_file_name.ends_with(".tex") {
+				   			input_file_name += &String::from(".tex");
+				   		}
 						match File::open(&input_file_name) {
 							Ok(f) => {
 								clean_and_copy_file(dest_file, &f, &folder);
