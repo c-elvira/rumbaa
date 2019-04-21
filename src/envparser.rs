@@ -1,4 +1,6 @@
 extern crate log;
+extern crate regex;
+
 
 macro_rules! hashmap {
     ($( $key: expr => $val: expr ),*) => {{
@@ -9,6 +11,8 @@ macro_rules! hashmap {
 }
 
 pub mod texparser {
+	use regex::Regex;
+
 	use std::collections::HashMap;
 
 	use crate::texstruct::tex_logic::{EnumMacroType,TexMacro};
@@ -153,7 +157,7 @@ pub mod texparser {
 				// (may contains Proof of \ref{...})
 				if  tex_macro.get_nb_opt_args() > 0 {
 					let arg = tex_macro.get_opt_arg(0);
-					proof.set_opt_arg(&arg);
+					proof.set_title(&arg);
 				}
 
 				// Add proof to stack
@@ -243,7 +247,16 @@ pub mod texparser {
 							self.doc.set_proof(&label, proof);
 						}
 						else {
-							warn!("Theorem {} not found", label)
+							match self.detect_theorem_proof_from_opt_arg(&proof) {
+								Some(l) => {
+									if self.doc.contains_key(&l) {
+										self.doc.set_proof(&l, proof);
+									}
+								}
+								None => {
+									warn!("Theorem {} not found", label)
+								}
+							}
 						}
 					}
 
@@ -291,6 +304,25 @@ pub mod texparser {
 				self.stack_env_filtered.push(tex_env);
 			}
 		}
+
+		fn detect_theorem_proof_from_opt_arg(&mut self, proof: &Proof) -> Option<String> {
+
+			let title = proof.get_title();
+			let b_proof = title.contains("Proof");
+			let b_of = title.contains("of");
+			let b_ref = title.contains("ref{");
+
+			if b_proof & b_of & b_ref {
+				let re = Regex::new(r"(ref\{)(.*?)(\})").unwrap();
+				let cap = re.captures(&title).unwrap();
+
+				if cap.len() == 4 {
+					return Some(cap[2].to_string())
+				}
+			}
+
+			return None
+		}
 	}
 
 	/* -------------------------------
@@ -304,7 +336,7 @@ pub mod texparser {
 	mod tests {
 
 		use crate::document::{Document};
-		use crate::texstruct::tex_logic::{EnumMacroType,TexMacro};
+		use crate::texstruct::tex_logic::{EnumMacroType,TexMacro,Proof};
 		use crate::envparser::texparser::{EnvParser};
 
 		fn tex_macro_builder(name: String, arg1: String) -> TexMacro {
@@ -380,6 +412,18 @@ pub mod texparser {
 			assert!(!dep.is_none());
 			let vec_dep = dep.unwrap();
 			assert!(vec_dep.len() == 1);
+		}
+
+		#[test]
+		fn detect_proof_theorem_in_title() {
+			let mut proof = Proof::new("".to_string());
+			proof.set_title(&"Proof of \\Cref{th}".to_string());
+
+			let mut doc = Document::new("filename".to_string());
+			let mut env_parser = EnvParser::new(&mut doc);
+
+			let dep = env_parser.detect_theorem_proof_from_opt_arg(&proof);
+			assert!(!dep.is_none());			
 		}
 	}
 }

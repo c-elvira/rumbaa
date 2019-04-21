@@ -219,7 +219,7 @@ pub mod tex_logic {
 		struct_label: String,
 		links: Vec<String>,
 
-		opt_arg: String,
+		title: String,
 	}
 
 	impl Proof {
@@ -228,12 +228,8 @@ pub mod tex_logic {
 				struct_label: label,
 				links: Vec::new(),
 
-				opt_arg: String::from(""),
+				title: String::from("Proof"),
 			}
-		}
-
-		pub fn set_opt_arg(&mut self, arg: &String) {
-			self.opt_arg = arg.clone();
 		}
 
 		pub fn add_link(&mut self, link: String) {
@@ -252,8 +248,16 @@ pub mod tex_logic {
 			self.struct_label.clone()
 		}
 
+		pub fn get_title(&self) -> &String {
+			&self.title
+		}
+
 		pub fn set_struct_label(&mut self, label: &String) {
 			self.struct_label = label.clone();
+		}
+
+		pub fn set_title(&mut self, arg: &String) {
+			self.title = arg.clone();
 		}
 	}
 }
