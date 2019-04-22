@@ -96,7 +96,9 @@ fn main() {
     trace!("3. parsing aux");
     match auxparser::parse_aux(&filename, &aux_folder, &mut doc, &verbose) {
     	Ok(()) => (),
-    	Err(e) => println!("an error occurs while parsing aux file\n{}", e),
+    	Err(_) => {
+    		warn!("Aux files have not been found");
+    	}
     };
 
 	// 3.2 delete arxiv file if necessary
