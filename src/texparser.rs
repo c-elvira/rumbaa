@@ -236,6 +236,8 @@ pub mod texparser {
 
 					else {
 						macro_out =  Some(self.close_macro());
+
+						self.re_inject_character(c);
 					}
 				}
 
@@ -650,6 +652,35 @@ pub mod texparser {
 			}
 
 			assert!(vec_macro.len() == 3);
+		}
+
+
+		#[test]
+		fn bug_label_after_th() {
+			//\\begin{theorem}\\label{th}
+			// label is not detected
+			let tex_line = String::from("\\begin{theorem}\\label{th} ");
+			let mut parser = TexParser::new();
+
+			let mut vec_macro: Vec<TexMacro>;
+			vec_macro = Vec::new();
+			for c in tex_line.chars() {
+				match parser.add_char(c) {
+					Some(m) => {
+						println!("{:?}", m.get_tex_code());
+						vec_macro.push(m)
+					}
+					None => ()
+				}
+			}
+
+			assert!(vec_macro.len() == 2);
+			assert!(vec_macro[0].get_name() == "begin");
+			assert!(vec_macro[0].get_nb_args() == 1);
+			assert!(vec_macro[0].get_arg(0) == "theorem");
+			assert!(vec_macro[1].get_name() == "label");
+			assert!(vec_macro[1].get_nb_args() == 1);
+			assert!(vec_macro[1].get_arg(0) == "th");
 		}
 
 		#[test]
