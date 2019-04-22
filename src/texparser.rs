@@ -148,8 +148,13 @@ pub mod texparser {
 							self.start_macro_arg(MacroArgType::Optional);
 						}
 						else {
-							// Not implemented yet
-							unimplemented!()
+							// Starting equation with \[
+							self.current_buffer = "begin".to_string();
+							self.add_macro_stack_from_buf();
+							self.start_macro_arg(MacroArgType::Arg);
+							self.current_buffer = "equation".to_string();
+							self.add_arg_to_macro_from_buf(MacroArgType::Arg);
+							macro_out = Some(self.close_macro());
 						}
 					}
 
@@ -165,6 +170,25 @@ pub mod texparser {
 						else {
 							self.add_macro_stack_from_buf();
 							self.start_macro_arg(MacroArgType::Arg);
+						}
+					}
+
+					else if c == ']' {
+						if self.current_buffer != "" {
+							// Macro ends without argument
+							self.add_macro_stack_from_buf();
+							macro_out = Some(self.close_macro());
+
+							self.re_inject_character(c);
+						}
+						else {
+							// closing equation with \]
+							self.current_buffer = "end".to_string();
+							self.add_macro_stack_from_buf();
+							self.start_macro_arg(MacroArgType::Arg);
+							self.current_buffer = "equation".to_string();
+							self.add_arg_to_macro_from_buf(MacroArgType::Arg);
+							macro_out = Some(self.close_macro());
 						}
 					}
 
@@ -682,6 +706,49 @@ pub mod texparser {
 			let opt_macro_out_3 = parser.add_char(tex_line_part8);
 			{
 				assert!(!opt_macro_out_3.is_none());
+			}
+		}
+
+		#[test]
+		fn handle_equation_mode_bracket() {
+			//todo: what happens when "//" is met?
+			let tex_line_part1 = String::from("\\[");
+			let tex_line_part2 = String::from("x+y=0");
+			let tex_line_part3 = String::from("\\]");
+
+			let mut parser = TexParser::new();
+			let mut macro_out = None;
+
+			for c in tex_line_part1.chars() {
+				macro_out = parser.add_char(c);
+			}
+
+			match macro_out {
+				Some(texmacro) => {
+					assert!(texmacro.get_name() == String::from("begin"));
+					assert!(texmacro.get_nb_args() == 1);
+				}
+				None => {
+					assert!(false);
+				}
+			}
+
+			for c in tex_line_part2.chars() {
+				assert!(parser.add_char(c).is_none())
+			}
+
+			macro_out = None;
+			for c in tex_line_part3.chars() {
+				macro_out = parser.add_char(c);
+			}
+			match macro_out {
+				Some(texmacro) => {
+					assert!(texmacro.get_name() == String::from("end"));
+					assert!(texmacro.get_nb_args() == 1);
+				}
+				None => {
+					assert!(false);
+				}
 			}
 		}
 	}
